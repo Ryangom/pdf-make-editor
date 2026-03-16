@@ -1,6 +1,6 @@
 # ⬡ PDFMake Visual Editor
 
-A powerful Angular 17 drag-and-drop PDF template designer that generates ready-to-use **pdfmake** code. Design ID cards, certificates, badges, invoices — anything — visually, then export the PDF or copy the developer code.
+A sophisticated Angular 17 standalone application that provides a powerful drag-and-drop interface for designing PDF templates. Generate production-ready pdfmake JavaScript code for dynamic documents like ID cards, certificates, badges, invoices, and reports — all through an intuitive WYSIWYG editor.
 
 ---
 
@@ -14,177 +14,295 @@ npm start
 
 ---
 
-## ✨ Features
+## ✨ Core Features
 
-### 🎨 Visual Canvas Editor
-- **Drag & drop** elements anywhere on the page
-- **8-point resize handles** for precise sizing
-- **Arrow key nudging** (1pt / 10pt with Shift)
-- **Zoom** (Ctrl+Scroll, + / − buttons, Fit to View)
-- **Rulers** with pt measurements
-- **Undo / Redo** (Ctrl+Z / Ctrl+Y, up to 50 steps)
-- **Delete** selected element with Delete / Backspace key
+### 🎨 Advanced Visual Canvas Editor
 
-### 📐 Element Types
+- **Precise Element Manipulation**: Drag-and-drop positioning with 8-point resize handles
+- **Professional Navigation**: Zoom controls (Ctrl+Scroll, buttons, fit-to-view), rulers with pt measurements
+- **Multi-Page Support**: Design front/back pages for double-sided documents (ID cards, business cards)
+- **Smart Interactions**: Arrow key nudging (1pt/10pt), undo/redo (50 steps), keyboard shortcuts
+- **Real-Time Preview**: Live rendering with variable substitution from bulk data
+- **Layer Management**: Z-index ordering, visibility toggles, element locking
 
-| Element | Description |
-|---------|-------------|
-| **Text** | Supports `{{variable}}` placeholders, font/size/bold/italic/color/alignment |
-| **Image** | Upload static image or bind to a `{{variable}}` for per-record photos |
-| **Rectangle** | Fill color, border color, border width — great for backgrounds/dividers |
+### 📐 Comprehensive Element System
 
-### 📄 Page Settings
-- Presets: A4 Portrait/Landscape, ID Card (CR80), Letter, Certificate, Custom
-- Upload a **background image** (drag & drop onto canvas or use button)
-- Configurable page margins
+| Element             | Capabilities                                                                                       |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| **Text**            | Rich typography (fonts, sizes, colors, alignment), `{{variable}}` placeholders, multi-line support |
+| **Image**           | Static uploads or dynamic `{{variable}}` binding with base64 data, aspect ratio preservation       |
+| **Rectangle**       | Background/border colors, configurable border width, opacity controls                              |
+| **Round Rectangle** | All rectangle features plus adjustable border radius                                               |
 
-### 🔢 Bulk Data & Loop
+### 📄 Flexible Page Configuration
 
-Three ways to enter data:
+- **Preset Sizes**: A4/Letter Portrait/Landscape, ID Card (CR80), Certificate, Custom dimensions
+- **Background Images**: Drag-and-drop upload with automatic scaling
+- **Multi-Page Templates**: Toggle double-sided mode for complex documents
+- **Precise Measurements**: All dimensions in PDF points (pts) for pixel-perfect output
 
-1. **JSON** — paste or type a JSON array, or click "Generate Sample" to auto-populate from your template variables
-2. **CSV** — paste CSV text or upload a `.csv` file; first row is headers
-3. **Table** — add columns and rows interactively
+### 🔄 Dynamic Data Integration
 
-**Bulk loop** generates one PDF with one page per record — perfect for printing batches of ID cards, certificates, etc.
+**Three Input Methods**:
 
-### 🧑‍💻 Code Viewer
-- Real-time **syntax-highlighted** pdfmake JavaScript code
-- Toggle between **single-record** and **bulk loop** modes
-- **Copy to clipboard** or **download as `.js` file**
-- Includes setup instructions and usage guide
+1. **JSON Arrays** — Direct paste or programmatic generation
+2. **CSV Files** — Upload `.csv` or paste delimited text with auto-parsing
+3. **Interactive Table** — Visual column/row editing with validation
+
+**Bulk Processing**: Generate one PDF page per data record — perfect for batch printing certificates, ID cards, or personalized documents.
+
+### 🧑‍💻 Intelligent Code Generation
+
+- **Syntax-Highlighted Output**: Real-time pdfmake JavaScript generation
+- **Dual Modes**: Single-record preview or bulk processing code
+- **Developer-Friendly**: Includes setup instructions, helper functions, and comprehensive comments
+- **Export Options**: Copy to clipboard or download as `.js` file
+- **Variable Detection**: Automatically identifies `{{variables}}` and generates resolve logic
 
 ### 💾 Template Management
-- **Save** template to `.json` file
-- **Load** any saved `.json` template
-- **Reset** to blank canvas
+
+- **JSON Export/Import**: Save designs as human-readable `.json` files
+- **Version Compatibility**: Backward-compatible with legacy single-page templates
+- **Quick Reset**: Start fresh with default template
 
 ---
 
-## 📁 Project Structure
+## 🏗️ Technical Architecture
+
+### Application Structure
 
 ```
 src/app/
-├── models/
-│   └── editor.models.ts          # Types: EditorElement, Template, PageSettings
+├── models/editor.models.ts      # TypeScript interfaces, constants, and defaults
 ├── services/
-│   ├── editor.service.ts         # Central state (BehaviorSubjects, undo/redo)
-│   └── pdf.service.ts            # PDF generation + code generation
+│   ├── editor.service.ts        # Reactive state management (RxJS BehaviorSubjects)
+│   └── pdf.service.ts           # PDF generation and code export logic
 ├── components/
-│   ├── canvas/                   # Visual drag/resize editor canvas
-│   ├── elements-palette/         # Left panel: add elements, layers, page size
-│   ├── properties-panel/         # Right panel: element properties editor
-│   ├── data-panel/               # Bottom: JSON/CSV/Table bulk data input
-│   ├── code-viewer/              # Bottom: syntax-highlighted PDFMake code
-│   └── toolbar/                  # Top: save/load/preview/export actions
-├── pipes/
-│   └── reverse.pipe.ts           # Reverses arrays (for layers z-order display)
-└── app.component.ts              # Root layout: 3-column + resizable bottom panel
+│   ├── app.component.ts         # Root layout with resizable 3-panel design
+│   ├── canvas/canvas.component.ts      # Interactive visual editor (718 lines)
+│   ├── elements-palette/               # Left sidebar: elements, layers, settings
+│   ├── properties-panel/               # Right sidebar: detailed property editors
+│   ├── data-panel/                     # Bottom: bulk data input (JSON/CSV/Table)
+│   ├── code-viewer/code-viewer.component.ts  # Bottom: generated code viewer
+│   └── toolbar/toolbar.component.ts    # Top: file operations and export actions
+├── pipes/reverse.pipe.ts        # Utility for layer z-order display
 ```
+
+### Key Technologies
+
+- **Framework**: Angular 17 with standalone components and OnPush change detection
+- **State**: RxJS BehaviorSubjects for reactive, immutable state updates
+- **PDF Engine**: pdfmake v0.2.10 with full TypeScript integration
+- **UI**: Custom CSS with CSS variables for theming and consistency
+- **Performance**: Efficient rendering, lazy evaluation, and memory management
+
+### Design Patterns
+
+- **Reactive State Management**: Service-based architecture with observable streams
+- **Component Composition**: Standalone components with explicit dependency injection
+- **Immutability**: Deep cloning for undo/redo history snapshots
+- **Separation of Concerns**: Clear boundaries between UI, business logic, and PDF generation
 
 ---
 
-## 🧩 Using `{{variables}}` for Dynamic Content
+## 🧩 Dynamic Content with Variables
 
-In any **Text** element, use `{{variableName}}` syntax:
+Use `{{variableName}}` syntax in any Text element for dynamic content:
 
+```javascript
+// Text Element Content
+"Hello, {{name}}!";
+"Student ID: {{studentId}}";
+"Grade: {{grade}}";
+"Photo: {{photo}}"; // For image elements
 ```
-Hello, {{name}}!
-Student ID: {{studentId}}
-Grade: {{grade}}
-```
 
-For **Image** elements, switch to "Variable" mode and enter `{{photo}}` — then supply base64 image data in your records.
+**Variable Resolution**:
 
-The **Code Viewer** automatically detects all variables and generates the correct `resolveVars()` helper function.
+- Automatically detects all variables in your template
+- Generates `resolveVars()` helper function in exported code
+- Supports nested object access: `{{user.name}}`
+- Graceful fallbacks for missing variables
 
 ---
 
-## 📦 Bulk PDF Example
+## 📦 Complete Workflow Example
 
-### 1. Design your template
-Create an ID card with Text elements like:
-- `{{name}}` — student name
-- `{{id}}` — student ID number
-- `{{department}}` — department
+### 1. Design Your Template
 
-### 2. Enter bulk data (JSON tab)
+Create a student ID card layout:
+
+- Background image upload
+- Text elements: `{{name}}`, `{{id}}`, `{{department}}`
+- Image element: `{{photo}}` (dynamic per student)
+- Rectangle elements for borders/design
+
+### 2. Prepare Bulk Data
+
 ```json
 [
-  { "name": "Alice Smith",  "id": "STU001", "department": "Computer Science" },
-  { "name": "Bob Johnson",  "id": "STU002", "department": "Mathematics" },
-  { "name": "Carol White",  "id": "STU003", "department": "Physics" }
+  {
+    "name": "Alice Smith",
+    "id": "STU001",
+    "department": "Computer Science",
+    "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+  },
+  {
+    "name": "Bob Johnson",
+    "id": "STU002",
+    "department": "Mathematics",
+    "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+  }
 ]
 ```
 
-### 3. Generate
-Click **"🖨 Print All (3)"** → opens a PDF with 3 pages (one ID card per student).
+### 3. Generate & Export
+
+- **Preview**: Single PDF with first record
+- **Bulk Print**: Multi-page PDF (one per student)
+- **Code Export**: Production-ready JavaScript for your application
 
 ---
 
-## 🛠 Using the Generated Code
+## 🛠️ Integration & Usage
+
+### Using Generated Code
 
 ```bash
 npm install pdfmake
 ```
 
 ```javascript
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import * as pdfMake from "pdfmake/build/pdfmake";
+import * as pdfFonts from "pdfmake/build/vfs_fonts";
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-// Paste the generated code here...
-// Then call:
+// For single record
+const docDefinition = {
+  pageSize: { width: 243, height: 153 },
+  pageMargins: [10, 10, 10, 10],
+  content: [
+    // Generated content here...
+  ],
+};
+
 pdfMake.createPdf(docDefinition).open();
-// or:
-pdfMake.createPdf(docDefinition).download('output.pdf');
+
+// For bulk processing
+const records = [
+  /* your data array */
+];
+const pdfs = records.map((record) => {
+  const resolvedContent = buildPageContent(record, true);
+  return pdfMake.createPdf({
+    pageSize: { width: 243, height: 153 },
+    content: resolvedContent,
+  });
+});
 ```
 
-The generated code is self-contained and includes:
-- The full `docDefinition` object
-- A `resolveVars()` helper function (for bulk mode)
-- Comments explaining each element
-- Setup instructions
+### Backend Integration
 
----
+Replace static data with API calls:
 
-## ⌨️ Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| `Ctrl+Z` | Undo |
-| `Ctrl+Y` | Redo |
-| `Delete` / `Backspace` | Delete selected element |
-| `Arrow keys` | Nudge element by 1pt |
-| `Shift+Arrow` | Nudge element by 10pt |
-| `Ctrl+Scroll` | Zoom in/out |
-
----
-
-## 🔧 Customization & Extension
-
-### Adding new element types
-1. Add to `ElementType` union in `editor.models.ts`
-2. Handle in `editor.service.ts` `addElement()` switch
-3. Render in `canvas.component.ts` template
-4. Generate pdfmake node in `pdf.service.ts` `buildPageContent()`
-
-### Integrating with a backend
-Replace the JSON textarea with an API call:
 ```typescript
 // In data-panel.component.ts
-async loadFromApi(endpoint: string) {
-  const response = await fetch(endpoint);
-  this.records = await response.json();
-  this.editorService.setBulkData(this.records);
+async loadFromDatabase(apiEndpoint: string) {
+  try {
+    const response = await fetch(apiEndpoint);
+    const records = await response.json();
+    this.editorService.setBulkData(records);
+  } catch (error) {
+    console.error('Failed to load data:', error);
+  }
 }
 ```
 
-### Custom fonts in pdfmake
-To use custom fonts, follow the [pdfmake custom fonts guide](https://pdfmake.github.io/docs/fonts/custom-fonts-client-side/) and extend the `FONT_FAMILIES` array in `editor.models.ts`.
+---
+
+## ⌨️ Keyboard Shortcuts & Controls
+
+| Shortcut               | Action                        |
+| ---------------------- | ----------------------------- |
+| `Ctrl+Z` / `Ctrl+Y`    | Undo / Redo (50-step history) |
+| `Delete` / `Backspace` | Delete selected element       |
+| `Arrow Keys`           | Nudge element by 1pt          |
+| `Shift + Arrow Keys`   | Nudge element by 10pt         |
+| `Ctrl + Scroll`        | Zoom in/out                   |
+| `Click Canvas`         | Deselect element              |
+
+---
+
+## 🔧 Extension & Customization
+
+### Adding New Element Types
+
+1. **Extend Types** (`editor.models.ts`):
+
+   ```typescript
+   export type ElementType =
+     | "text"
+     | "image"
+     | "rectangle"
+     | "roundrect"
+     | "circle";
+   ```
+
+2. **Implement Creation** (`editor.service.ts`):
+
+   ```typescript
+   case 'circle':
+     el = { /* circle-specific properties */ };
+     break;
+   ```
+
+3. **Add Rendering** (`canvas.component.ts`):
+
+   ```html
+   <div *ngIf="el.type === 'circle'" class="el-circle"></div>
+   ```
+
+4. **PDF Generation** (`pdf.service.ts`):
+   ```typescript
+   case 'circle':
+     content.push({ canvas: [{ type: 'ellipse', /* ... */ }] });
+     break;
+   ```
+
+### Custom Fonts
+
+Extend `FONT_FAMILIES` in `editor.models.ts` and follow [pdfmake font documentation](https://pdfmake.github.io/docs/fonts/custom-fonts-client-side/).
+
+### Theming
+
+Modify CSS variables in `styles.scss` for custom branding:
+
+```scss
+:root {
+  --accent: #your-brand-color;
+  --panel: #your-bg-color;
+  /* ... */
+}
+```
+
+---
+
+## 📊 Performance & Limitations
+
+**Optimized For**:
+
+- Complex templates with 50+ elements
+- Bulk processing of 1000+ records
+- Large background images and embedded assets
+
+**Current Limitations**:
+
+- Single font family per text element (pdfmake constraint)
+- No gradient fills or advanced shapes
+- Client-side PDF generation (large datasets may impact browser performance)
 
 ---
 
 ## 📄 License
 
-MIT — free to use and modify.
+MIT — Free to use, modify, and distribute. Built with ❤️ using Angular and pdfmake.
