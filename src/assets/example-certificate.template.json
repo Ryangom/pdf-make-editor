@@ -1,0 +1,382 @@
+{
+  "name": "Certificate of Completion",
+  "page": {
+    "width": 842,
+    "height": 595,
+    "marginTop": 0,
+    "marginRight": 0,
+    "marginBottom": 0,
+    "marginLeft": 0,
+    "backgroundImage": ""
+  },
+  "elements": [
+    {
+      "id": "el_outer_border",
+      "type": "rectangle",
+      "label": "Outer Border",
+      "x": 0, "y": 0,
+      "width": 842, "height": 595,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "#fdfaf5",
+        "borderColor": "#c9a84c", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": true, "visible": true
+    },
+    {
+      "id": "el_gold_border_outer",
+      "type": "rectangle",
+      "label": "Gold Border Outer",
+      "x": 18, "y": 18,
+      "width": 806, "height": 559,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "transparent",
+        "borderColor": "#c9a84c", "borderWidth": 3,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": true, "visible": true
+    },
+    {
+      "id": "el_gold_border_inner",
+      "type": "rectangle",
+      "label": "Gold Border Inner",
+      "x": 28, "y": 28,
+      "width": 786, "height": 539,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "transparent",
+        "borderColor": "#c9a84c", "borderWidth": 1,
+        "opacity": 0.5, "lineHeight": 1.3
+      },
+      "locked": true, "visible": true
+    },
+    {
+      "id": "el_top_banner",
+      "type": "rectangle",
+      "label": "Top Banner",
+      "x": 18, "y": 18,
+      "width": 806, "height": 80,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "#1a1a2e",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": true, "visible": true
+    },
+    {
+      "id": "el_org_name",
+      "type": "text",
+      "label": "Organization Name",
+      "x": 50, "y": 30,
+      "width": 742, "height": 30,
+      "content": "{{organization}}",
+      "style": {
+        "fontSize": 20, "fontFamily": "Times-Bold",
+        "color": "#c9a84c", "bold": true, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_org_tagline",
+      "type": "text",
+      "label": "Org Tagline",
+      "x": 50, "y": 60,
+      "width": 742, "height": 18,
+      "content": "{{tagline}}",
+      "style": {
+        "fontSize": 9, "fontFamily": "Helvetica",
+        "color": "#a78bfa", "bold": false, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_cert_title",
+      "type": "text",
+      "label": "Certificate Title",
+      "x": 50, "y": 118,
+      "width": 742, "height": 50,
+      "content": "CERTIFICATE OF COMPLETION",
+      "style": {
+        "fontSize": 34, "fontFamily": "Times-Bold",
+        "color": "#1a1a2e", "bold": true, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.2
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_subtitle_line",
+      "type": "rectangle",
+      "label": "Decorative Line",
+      "x": 300, "y": 172,
+      "width": 242, "height": 2,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "#c9a84c",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": true, "visible": true
+    },
+    {
+      "id": "el_presented_to",
+      "type": "text",
+      "label": "Presented To Label",
+      "x": 50, "y": 190,
+      "width": 742, "height": 20,
+      "content": "This is to certify that",
+      "style": {
+        "fontSize": 13, "fontFamily": "Times",
+        "color": "#555577", "bold": false, "italic": true,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_recipient_name",
+      "type": "text",
+      "label": "Recipient Name",
+      "x": 50, "y": 215,
+      "width": 742, "height": 48,
+      "content": "{{recipientName}}",
+      "style": {
+        "fontSize": 38, "fontFamily": "Times-Bold",
+        "color": "#7c5af5", "bold": true, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.2
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_name_underline",
+      "type": "rectangle",
+      "label": "Name Underline",
+      "x": 150, "y": 265,
+      "width": 542, "height": 1,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "#7c5af5",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 0.4, "lineHeight": 1.3
+      },
+      "locked": true, "visible": true
+    },
+    {
+      "id": "el_for_completing",
+      "type": "text",
+      "label": "For Completing Text",
+      "x": 50, "y": 278,
+      "width": 742, "height": 20,
+      "content": "has successfully completed",
+      "style": {
+        "fontSize": 13, "fontFamily": "Times",
+        "color": "#555577", "bold": false, "italic": true,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_course_name",
+      "type": "text",
+      "label": "Course / Program Name",
+      "x": 50, "y": 302,
+      "width": 742, "height": 30,
+      "content": "{{courseName}}",
+      "style": {
+        "fontSize": 22, "fontFamily": "Times-Bold",
+        "color": "#1a1a2e", "bold": true, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.2
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_date_text",
+      "type": "text",
+      "label": "Date Text",
+      "x": 50, "y": 340,
+      "width": 742, "height": 18,
+      "content": "Awarded on {{date}}",
+      "style": {
+        "fontSize": 11, "fontFamily": "Helvetica",
+        "color": "#777799", "bold": false, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_sig_line_left",
+      "type": "rectangle",
+      "label": "Signature Line Left",
+      "x": 80, "y": 460,
+      "width": 160, "height": 1,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "#1a1a2e",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 0.6, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_sig_name_left",
+      "type": "text",
+      "label": "Signatory 1 Name",
+      "x": 80, "y": 466,
+      "width": 160, "height": 16,
+      "content": "{{signatoryName}}",
+      "style": {
+        "fontSize": 9, "fontFamily": "Helvetica-Bold",
+        "color": "#1a1a2e", "bold": true, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_sig_title_left",
+      "type": "text",
+      "label": "Signatory 1 Title",
+      "x": 80, "y": 480,
+      "width": 160, "height": 14,
+      "content": "{{signatoryTitle}}",
+      "style": {
+        "fontSize": 8, "fontFamily": "Helvetica",
+        "color": "#777799", "bold": false, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_cert_no",
+      "type": "text",
+      "label": "Certificate Number",
+      "x": 280, "y": 465,
+      "width": 282, "height": 30,
+      "content": "Certificate No: {{certNo}}",
+      "style": {
+        "fontSize": 8, "fontFamily": "Courier",
+        "color": "#999999", "bold": false, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.5
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_sig_line_right",
+      "type": "rectangle",
+      "label": "Signature Line Right",
+      "x": 602, "y": 460,
+      "width": 160, "height": 1,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "#1a1a2e",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 0.6, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_sig_name_right",
+      "type": "text",
+      "label": "Signatory 2 Name",
+      "x": 602, "y": 466,
+      "width": 160, "height": 16,
+      "content": "{{directorName}}",
+      "style": {
+        "fontSize": 9, "fontFamily": "Helvetica-Bold",
+        "color": "#1a1a2e", "bold": true, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_sig_title_right",
+      "type": "text",
+      "label": "Signatory 2 Title",
+      "x": 602, "y": 480,
+      "width": 160, "height": 14,
+      "content": "Director",
+      "style": {
+        "fontSize": 8, "fontFamily": "Helvetica",
+        "color": "#777799", "bold": false, "italic": false,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": false, "visible": true
+    },
+    {
+      "id": "el_bottom_strip",
+      "type": "rectangle",
+      "label": "Bottom Strip",
+      "x": 18, "y": 515,
+      "width": 806, "height": 42,
+      "content": "",
+      "style": {
+        "fontSize": 14, "fontFamily": "Helvetica", "color": "#ffffff",
+        "bold": false, "italic": false, "alignment": "left",
+        "backgroundColor": "#1a1a2e",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": true, "visible": true
+    },
+    {
+      "id": "el_footer_text",
+      "type": "text",
+      "label": "Footer Text",
+      "x": 50, "y": 527,
+      "width": 742, "height": 18,
+      "content": "This certificate is issued in recognition of dedication and successful achievement.",
+      "style": {
+        "fontSize": 8, "fontFamily": "Helvetica",
+        "color": "#a0a0be", "bold": false, "italic": true,
+        "alignment": "center", "backgroundColor": "transparent",
+        "borderColor": "transparent", "borderWidth": 0,
+        "opacity": 1, "lineHeight": 1.3
+      },
+      "locked": true, "visible": true
+    }
+  ]
+}
