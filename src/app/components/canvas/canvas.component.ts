@@ -98,6 +98,16 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
                  [style.borderStyle]="el.style.borderWidth > 0 ? 'solid' : 'none'">
             </div>
 
+            <!-- ROUND RECTANGLE -->
+            <div *ngIf="el.type === 'roundrect'"
+                 class="el-rect"
+                 [style.backgroundColor]="el.style.backgroundColor"
+                 [style.borderWidth.px]="el.style.borderWidth"
+                 [style.borderColor]="el.style.borderColor"
+                 [style.borderStyle]="el.style.borderWidth > 0 ? 'solid' : 'none'"
+                 [style.borderRadius.px]="el.style.borderRadius">
+            </div>
+
             <!-- Selection handles (only when selected and not locked) -->
             <ng-container *ngIf="selectedId === el.id && !el.locked">
               <div class="resize-handle nw" (mousedown)="onResizeMouseDown($event, el, 'nw')"></div>
@@ -437,7 +447,7 @@ export class CanvasComponent implements OnInit, OnDestroy {
   constructor(
     private editorService: EditorService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.subs.add(this.editorService.template$.subscribe(t => {
@@ -581,9 +591,9 @@ export class CanvasComponent implements OnInit, OnDestroy {
       if (!el) return;
       const step = e.shiftKey ? 10 : 1;
       const updates: Partial<EditorElement> = {};
-      if (e.key === 'ArrowUp')    updates.y = el.y - step;
-      if (e.key === 'ArrowDown')  updates.y = el.y + step;
-      if (e.key === 'ArrowLeft')  updates.x = el.x - step;
+      if (e.key === 'ArrowUp') updates.y = el.y - step;
+      if (e.key === 'ArrowDown') updates.y = el.y + step;
+      if (e.key === 'ArrowLeft') updates.x = el.x - step;
       if (e.key === 'ArrowRight') updates.x = el.x + step;
       this.editorService.updateElement(this.selectedId, updates);
     }

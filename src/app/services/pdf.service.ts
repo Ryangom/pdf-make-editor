@@ -106,6 +106,29 @@ export class PdfService {
           }
           break;
         }
+
+        case 'roundrect': {
+          const hasBackground = el.style.backgroundColor && el.style.backgroundColor !== 'transparent';
+          const hasBorder = el.style.borderWidth > 0 && el.style.borderColor && el.style.borderColor !== 'transparent';
+          const radius = el.style.borderRadius || 10;
+          if (hasBackground || hasBorder) {
+            content.push({
+              canvas: [{
+                type: 'rect',
+                x: 0, y: 0,
+                w: el.width,
+                h: el.height,
+                r: radius,
+                color: hasBackground ? el.style.backgroundColor : undefined,
+                lineWidth: hasBorder ? el.style.borderWidth : 0,
+                lineColor: hasBorder ? el.style.borderColor : undefined,
+              }],
+              absolutePosition: { x: el.x, y: el.y },
+              width: el.width,
+            });
+          }
+          break;
+        }
       }
     }
 
@@ -200,7 +223,7 @@ const docDefinition = {
 };
 
 pdfMake.createPdf(docDefinition).open();`
-      : `// ── Single Record Data ──
+        : `// ── Single Record Data ──
 const record = ${sampleData.slice(2, -2).trim()};
 
 const docDefinition = ${docStr};
@@ -246,6 +269,14 @@ pdfMake.createPdf(docDefinition).open();`}
         case 'rectangle':
           lines.push(`  content.push({`);
           lines.push(`    canvas: [{ type: 'rect', x: 0, y: 0, w: ${Math.round(el.width)}, h: ${Math.round(el.height)},`);
+          lines.push(`      color: ${JSON.stringify(el.style.backgroundColor)}, lineWidth: ${el.style.borderWidth}, lineColor: ${JSON.stringify(el.style.borderColor)} }],`);
+          lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
+          lines.push(`    width: ${Math.round(el.width)},`);
+          lines.push(`  });`);
+          break;
+        case 'roundrect':
+          lines.push(`  content.push({`);
+          lines.push(`    canvas: [{ type: 'rect', x: 0, y: 0, w: ${Math.round(el.width)}, h: ${Math.round(el.height)}, r: ${el.style.borderRadius || 10},`);
           lines.push(`      color: ${JSON.stringify(el.style.backgroundColor)}, lineWidth: ${el.style.borderWidth}, lineColor: ${JSON.stringify(el.style.borderColor)} }],`);
           lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
           lines.push(`    width: ${Math.round(el.width)},`);

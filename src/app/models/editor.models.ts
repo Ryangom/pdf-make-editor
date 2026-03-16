@@ -1,5 +1,5 @@
 // ─── Element Types ────────────────────────────────────────────────────────────
-export type ElementType = 'text' | 'image' | 'rectangle';
+export type ElementType = 'text' | 'image' | 'rectangle' | 'roundrect';
 
 export interface ElementStyle {
   fontSize: number;
@@ -11,6 +11,7 @@ export interface ElementStyle {
   backgroundColor: string;
   borderColor: string;
   borderWidth: number;
+  borderRadius: number;
   opacity: number;
   lineHeight: number;
 }
@@ -37,12 +38,12 @@ export interface PageSize {
 }
 
 export const PAGE_SIZES: PageSize[] = [
-  { label: 'A4 Portrait',    width: 595,  height: 842 },
-  { label: 'A4 Landscape',   width: 842,  height: 595 },
-  { label: 'ID Card (CR80)', width: 243,  height: 153 },
-  { label: 'Letter',         width: 612,  height: 792 },
-  { label: 'Certificate',    width: 842,  height: 595 },
-  { label: 'Custom',         width: 595,  height: 842 },
+  { label: 'A4 Portrait', width: 595, height: 842 },
+  { label: 'A4 Landscape', width: 842, height: 595 },
+  { label: 'ID Card (CR80)', width: 243, height: 153 },
+  { label: 'Letter', width: 612, height: 792 },
+  { label: 'Certificate', width: 842, height: 595 },
+  { label: 'Custom', width: 595, height: 842 },
 ];
 
 export interface PageSettings {
@@ -75,6 +76,7 @@ export const DEFAULT_STYLE: ElementStyle = {
   backgroundColor: 'transparent',
   borderColor: 'transparent',
   borderWidth: 0,
+  borderRadius: 0,
   opacity: 1,
   lineHeight: 1.3,
 };

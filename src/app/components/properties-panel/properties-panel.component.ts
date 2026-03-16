@@ -178,7 +178,7 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
                 <button class="clear-btn" (click)="updateStyle({backgroundColor: 'transparent'})" title="Clear">✕</button>
               </div>
             </div>
-            <div class="color-row" *ngIf="el.type === 'rectangle'">
+            <div class="color-row" *ngIf="el.type === 'rectangle' || el.type === 'roundrect'">
               <span class="color-label">Border</span>
               <div class="color-picker-wrap">
                 <input type="color" [ngModel]="toHex(el.style.borderColor)"
@@ -188,10 +188,15 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
                   class="color-text-input" placeholder="#000000" />
               </div>
             </div>
-            <div class="form-group" *ngIf="el.type === 'rectangle'" style="margin-top: 8px">
+            <div class="form-group" *ngIf="el.type === 'rectangle' || el.type === 'roundrect'" style="margin-top: 8px">
               <label>Border Width (pts)</label>
               <input type="number" [ngModel]="el.style.borderWidth"
                 (ngModelChange)="updateStyle({borderWidth: +$event})" min="0" max="20" />
+            </div>
+            <div class="form-group" *ngIf="el.type === 'roundrect'" style="margin-top: 8px">
+              <label>Corner Radius (pts)</label>
+              <input type="number" [ngModel]="el.style.borderRadius"
+                (ngModelChange)="updateStyle({borderRadius: +$event})" min="0" max="100" />
             </div>
           </div>
         </div>
@@ -448,7 +453,7 @@ export class PropertiesPanelComponent implements OnInit, OnDestroy {
   constructor(
     private editorService: EditorService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.subs.add(this.editorService.selectedId$.subscribe(() => {

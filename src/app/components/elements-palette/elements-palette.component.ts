@@ -75,7 +75,11 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
           </button>
           <button class="el-type-btn" (click)="addElement('rectangle')">
             <span class="el-icon">▭</span>
-            <span>Shape</span>
+            <span>Rectangle</span>
+          </button>
+          <button class="el-type-btn" (click)="addElement('roundrect')">
+            <span class="el-icon">⧫</span>
+            <span>Round</span>
           </button>
         </div>
       </div>
@@ -403,7 +407,7 @@ export class ElementsPaletteComponent implements OnInit, OnDestroy {
   toggleLocked(el: EditorElement) { this.editorService.updateElement(el.id, { locked: !el.locked }); }
 
   getTypeIcon(type: string) {
-    return type === 'text' ? 'T' : type === 'image' ? '🖼' : '▭';
+    return type === 'text' ? 'T' : type === 'image' ? '🖼' : type === 'roundrect' ? '⧫' : '▭';
   }
 
   onPageSizeChange(label: string) {

@@ -102,6 +102,23 @@ export class EditorService {
         };
         break;
 
+      case 'roundrect':
+        el = {
+          id, type, label: `Round Shape ${elementCounter}`,
+          x: cx - 60, y: cy - 30,
+          width: 120, height: 60,
+          content: '',
+          style: {
+            ...baseStyle,
+            backgroundColor: 'rgba(124,90,245,0.15)',
+            borderColor: '#7c5af5',
+            borderWidth: 2,
+            borderRadius: 20,
+          },
+          locked: false, visible: true
+        };
+        break;
+
       default:
         throw new Error(`Unknown element type: ${type}`);
     }
