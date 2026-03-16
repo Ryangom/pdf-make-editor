@@ -26,29 +26,49 @@ export class PdfService {
 
   extractVars(template: Template): string[] {
     const vars = new Set<string>();
-    for (const el of template.elements) {
-      const matches = el.content.matchAll(/\{\{(\w+)\}\}/g);
-      for (const m of matches) vars.add(m[1]);
+    if (template.pages) {
+      // Multi-page mode - extract from all pages
+      for (const page of template.pages) {
+        for (const el of page.elements) {
+          const matches = el.content.matchAll(/\{\{(\w+)\}\}/g);
+          for (const m of matches) vars.add(m[1]);
+        }
+      }
+    } else {
+      // Single-page mode
+      for (const el of template.elements) {
+        const matches = el.content.matchAll(/\{\{(\w+)\}\}/g);
+        for (const m of matches) vars.add(m[1]);
+      }
     }
     return Array.from(vars);
   }
 
   // ─── Build PDFMake Content ────────────────────────────────────────────────
   private buildPageContent(template: Template, record: DataRecord): any[] {
+    // For backward compatibility, use the current page
+    const currentPage = template.pages ? template.pages[0] : {
+      settings: template.page,
+      elements: template.elements
+    };
+    return this.buildPageContentFromPage(currentPage, record);
+  }
+
+  private buildPageContentFromPage(pageData: any, record: DataRecord): any[] {
     const content: any[] = [];
 
     // Background image
-    if (template.page.backgroundImage) {
+    if (pageData.settings.backgroundImage) {
       content.push({
-        image: template.page.backgroundImage,
-        width: template.page.width,
-        height: template.page.height,
+        image: pageData.settings.backgroundImage,
+        width: pageData.settings.width,
+        height: pageData.settings.height,
         absolutePosition: { x: 0, y: 0 },
       });
     }
 
     // Elements (sorted by array order = z-index)
-    for (const el of template.elements) {
+    for (const el of pageData.elements) {
       if (!el.visible) continue;
 
       switch (el.type) {
@@ -137,24 +157,57 @@ export class PdfService {
 
   // ─── Build Full Doc Definition ────────────────────────────────────────────
   buildDocDefinition(template: Template, records: DataRecord[]): any {
-    const { width, height, marginTop, marginRight, marginBottom, marginLeft } = template.page;
     const effectiveRecords = records.length > 0 ? records : [{}];
-
     const content: any[] = [];
 
-    effectiveRecords.forEach((record, idx) => {
-      if (idx > 0) {
-        // Page break between records
-        content.push({ text: '', pageBreak: 'before' });
-      }
-      content.push(...this.buildPageContent(template, record));
-    });
+    if (template.pages && template.hasBackPage && template.pages.length >= 2) {
+      // Multi-page mode (front/back)
+      effectiveRecords.forEach((record, idx) => {
+        if (idx > 0) {
+          // Page break between records
+          content.push({ text: '', pageBreak: 'before' });
+        }
 
-    return {
-      pageSize: { width, height },
-      pageMargins: [marginLeft, marginTop, marginRight, marginBottom],
-      content,
-    };
+        // Add front page
+        const frontPage = template.pages![0];
+        content.push(...this.buildPageContentFromPage(frontPage, record));
+
+        // Add back page
+        const backPage = template.pages![1];
+        content.push({ text: '', pageBreak: 'before' }); // Page break for back
+        content.push(...this.buildPageContentFromPage(backPage, record));
+      });
+
+      // Use front page settings for PDF dimensions
+      const frontPage = template.pages![0];
+      return {
+        pageSize: { width: frontPage.settings.width, height: frontPage.settings.height },
+        pageMargins: [
+          frontPage.settings.marginLeft,
+          frontPage.settings.marginTop,
+          frontPage.settings.marginRight,
+          frontPage.settings.marginBottom
+        ],
+        content,
+      };
+    } else {
+      // Single-page mode (backward compatibility)
+      const { width, height, marginTop, marginRight, marginBottom, marginLeft } = template.page;
+
+      effectiveRecords.forEach((record, idx) => {
+        if (idx > 0) {
+          // Page break between records
+          content.push({ text: '', pageBreak: 'before' });
+        }
+        content.push(...this.buildPageContent(template, record));
+      });
+
+      return {
+        pageSize: { width, height },
+        pageMargins: [marginLeft, marginTop, marginRight, marginBottom],
+        content,
+      };
+    }
   }
 
   // ─── Generate PDF ─────────────────────────────────────────────────────────
@@ -216,11 +269,16 @@ function buildPageContent(record, isFirst) {
 }
 
 // ── Assemble full doc ──
+${template.pages && template.hasBackPage ? `// Multi-page template (front + back pages)
 const docDefinition = {
+  pageSize: { width: ${template.pages[0].settings.width}, height: ${template.pages[0].settings.height} },
+  pageMargins: [${template.pages[0].settings.marginLeft}, ${template.pages[0].settings.marginTop}, ${template.pages[0].settings.marginRight}, ${template.pages[0].settings.marginBottom}],
+  content: records.flatMap((r, i) => buildPageContent(r, i === 0)),
+};` : `const docDefinition = {
   pageSize: { width: ${template.page.width}, height: ${template.page.height} },
   pageMargins: [${template.page.marginLeft}, ${template.page.marginTop}, ${template.page.marginRight}, ${template.page.marginBottom}],
   content: records.flatMap((r, i) => buildPageContent(r, i === 0)),
-};
+};`}
 
 pdfMake.createPdf(docDefinition).open();`
         : `// ── Single Record Data ──
@@ -234,59 +292,111 @@ pdfMake.createPdf(docDefinition).open();`}
 
   private generateLoopCode(template: Template): string {
     const lines: string[] = [];
-    if (template.page.backgroundImage) {
-      lines.push(`  // Background image (replace with your base64 or URL)`);
-      lines.push(`  content.push({`);
-      lines.push(`    image: backgroundImageData, // your base64 data URL`);
-      lines.push(`    width: ${template.page.width}, height: ${template.page.height},`);
-      lines.push(`    absolutePosition: { x: 0, y: 0 },`);
-      lines.push(`  });`);
-      lines.push('');
-    }
-    for (const el of template.elements) {
-      if (!el.visible) continue;
-      lines.push(`  // Element: "${el.label}" (${el.type})`);
-      switch (el.type) {
-        case 'text':
-          lines.push(`  content.push({`);
-          lines.push(`    text: resolveVars(${JSON.stringify(el.content)}, record),`);
-          lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
-          lines.push(`    width: ${Math.round(el.width)},`);
-          lines.push(`    fontSize: ${el.style.fontSize},`);
-          lines.push(`    color: ${JSON.stringify(el.style.color)},`);
-          if (el.style.bold) lines.push(`    bold: true,`);
-          if (el.style.italic) lines.push(`    italics: true,`);
-          lines.push(`    alignment: ${JSON.stringify(el.style.alignment)},`);
-          lines.push(`  });`);
-          break;
-        case 'image':
-          lines.push(`  content.push({`);
-          lines.push(`    image: resolveVars(${JSON.stringify(el.content)}, record), // use base64 or {{varName}}`);
-          lines.push(`    width: ${Math.round(el.width)}, height: ${Math.round(el.height)},`);
-          lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
-          lines.push(`  });`);
-          break;
-        case 'rectangle':
-          lines.push(`  content.push({`);
-          lines.push(`    canvas: [{ type: 'rect', x: 0, y: 0, w: ${Math.round(el.width)}, h: ${Math.round(el.height)},`);
-          lines.push(`      color: ${JSON.stringify(el.style.backgroundColor)}, lineWidth: ${el.style.borderWidth}, lineColor: ${JSON.stringify(el.style.borderColor)} }],`);
-          lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
-          lines.push(`    width: ${Math.round(el.width)},`);
-          lines.push(`  });`);
-          break;
-        case 'roundrect':
-          lines.push(`  content.push({`);
-          lines.push(`    canvas: [{ type: 'rect', x: 0, y: 0, w: ${Math.round(el.width)}, h: ${Math.round(el.height)}, r: ${el.style.borderRadius || 10},`);
-          lines.push(`      color: ${JSON.stringify(el.style.backgroundColor)}, lineWidth: ${el.style.borderWidth}, lineColor: ${JSON.stringify(el.style.borderColor)} }],`);
-          lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
-          lines.push(`    width: ${Math.round(el.width)},`);
-          lines.push(`  });`);
-          break;
+
+    if (template.pages && template.hasBackPage && template.pages.length >= 2) {
+      // Multi-page mode - generate code for both front and back pages
+      const frontPage = template.pages[0];
+      const backPage = template.pages[1];
+
+      // Front page
+      lines.push(`  // Front Page`);
+      if (frontPage.settings.backgroundImage) {
+        lines.push(`  content.push({`);
+        lines.push(`    image: frontBackgroundImageData, // your base64 data URL for front`);
+        lines.push(`    width: ${frontPage.settings.width}, height: ${frontPage.settings.height},`);
+        lines.push(`    absolutePosition: { x: 0, y: 0 },`);
+        lines.push(`  });`);
       }
-      lines.push('');
+
+      for (const el of frontPage.elements) {
+        if (!el.visible) continue;
+        lines.push(`  // Front: "${el.label}" (${el.type})`);
+        this.addElementCode(lines, el);
+      }
+
+      // Page break for back
+      lines.push(`  content.push({ text: '', pageBreak: 'before' });`);
+      lines.push(`  // Back Page`);
+
+      if (backPage.settings.backgroundImage) {
+        lines.push(`  content.push({`);
+        lines.push(`    image: backBackgroundImageData, // your base64 data URL for back`);
+        lines.push(`    width: ${backPage.settings.width}, height: ${backPage.settings.height},`);
+        lines.push(`    absolutePosition: { x: 0, y: 0 },`);
+        lines.push(`  });`);
+      }
+
+      for (const el of backPage.elements) {
+        if (!el.visible) continue;
+        lines.push(`  // Back: "${el.label}" (${el.type})`);
+        this.addElementCode(lines, el);
+      }
+    } else {
+      // Single-page mode (backward compatibility)
+      const currentPage = template.pages ? template.pages[0] : {
+        settings: template.page,
+        elements: template.elements
+      };
+
+      if (currentPage.settings.backgroundImage) {
+        lines.push(`  // Background image (replace with your base64 or URL)`);
+        lines.push(`  content.push({`);
+        lines.push(`    image: backgroundImageData, // your base64 data URL`);
+        lines.push(`    width: ${currentPage.settings.width}, height: ${currentPage.settings.height},`);
+        lines.push(`    absolutePosition: { x: 0, y: 0 },`);
+        lines.push(`  });`);
+      }
+
+      for (const el of currentPage.elements) {
+        if (!el.visible) continue;
+        lines.push(`  // Element: "${el.label}" (${el.type})`);
+        this.addElementCode(lines, el);
+      }
     }
+
     lines.push(`  return content;`);
     return lines.join('\n');
+  }
+
+  private addElementCode(lines: string[], el: any): void {
+    switch (el.type) {
+      case 'text':
+        lines.push(`  content.push({`);
+        lines.push(`    text: resolveVars(${JSON.stringify(el.content)}, record),`);
+        lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
+        lines.push(`    width: ${Math.round(el.width)},`);
+        lines.push(`    fontSize: ${el.style.fontSize},`);
+        lines.push(`    color: ${JSON.stringify(el.style.color)},`);
+        if (el.style.bold) lines.push(`    bold: true,`);
+        if (el.style.italic) lines.push(`    italics: true,`);
+        lines.push(`    alignment: ${JSON.stringify(el.style.alignment)},`);
+        lines.push(`  });`);
+        break;
+      case 'image':
+        lines.push(`  content.push({`);
+        lines.push(`    image: resolveVars(${JSON.stringify(el.content)}, record), // use base64 or {{varName}}`);
+        lines.push(`    width: ${Math.round(el.width)}, height: ${Math.round(el.height)},`);
+        lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
+        lines.push(`  });`);
+        break;
+      case 'rectangle':
+        lines.push(`  content.push({`);
+        lines.push(`    canvas: [{ type: 'rect', x: 0, y: 0, w: ${Math.round(el.width)}, h: ${Math.round(el.height)},`);
+        lines.push(`      color: ${JSON.stringify(el.style.backgroundColor)}, lineWidth: ${el.style.borderWidth}, lineColor: ${JSON.stringify(el.style.borderColor)} }],`);
+        lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
+        lines.push(`    width: ${Math.round(el.width)},`);
+        lines.push(`  });`);
+        break;
+      case 'roundrect':
+        lines.push(`  content.push({`);
+        lines.push(`    canvas: [{ type: 'rect', x: 0, y: 0, w: ${Math.round(el.width)}, h: ${Math.round(el.height)}, r: ${el.style.borderRadius || 10},`);
+        lines.push(`    color: ${JSON.stringify(el.style.backgroundColor)}, lineWidth: ${el.style.borderWidth}, lineColor: ${JSON.stringify(el.style.borderColor)} }],`);
+        lines.push(`    absolutePosition: { x: ${Math.round(el.x)}, y: ${Math.round(el.y)} },`);
+        lines.push(`    width: ${Math.round(el.width)},`);
+        lines.push(`  });`);
+        break;
+    }
+    lines.push('');
   }
 
   private shrinkBase64(obj: any): any {

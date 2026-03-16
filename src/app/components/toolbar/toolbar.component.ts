@@ -86,9 +86,9 @@ interface ExampleTemplate {
 
       <!-- ── Right: Export ── -->
       <div class="tb-right">
-        <div class="el-badge" *ngIf="template?.elements?.length">
-          <span class="el-n">{{ template.elements.length }}</span>
-          <span class="el-lbl">elem{{ template.elements.length !== 1 ? 's' : '' }}</span>
+        <div class="el-badge" *ngIf="currentElements?.length">
+          <span class="el-n">{{ currentElements.length }}</span>
+          <span class="el-lbl">elem{{ currentElements.length !== 1 ? 's' : '' }}</span>
         </div>
 
         <button class="tb-btn tb-btn-preview" (click)="quickPreview()" [disabled]="isGenerating">
@@ -462,10 +462,10 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   readonly varEx2 = '{{studentId}}';
 
   readonly features = [
-    { icon: '🎨', title: 'Visual Canvas',      desc: 'Drag, resize & style elements on a pixel-perfect page with real-time preview' },
-    { icon: '⚡', title: 'Dynamic Variables',  desc: 'Bind {{variables}} to text & image elements for fully personalised output' },
-    { icon: '🔁', title: 'Bulk Loop',          desc: 'Feed a JSON / CSV dataset to print N pages in one PDF — one per record' },
-    { icon: '📋', title: 'Export Code',         desc: 'Copy the generated pdfmake JS code and drop it straight into your project' },
+    { icon: '🎨', title: 'Visual Canvas', desc: 'Drag, resize & style elements on a pixel-perfect page with real-time preview' },
+    { icon: '⚡', title: 'Dynamic Variables', desc: 'Bind {{variables}} to text & image elements for fully personalised output' },
+    { icon: '🔁', title: 'Bulk Loop', desc: 'Feed a JSON / CSV dataset to print N pages in one PDF — one per record' },
+    { icon: '📋', title: 'Export Code', desc: 'Copy the generated pdfmake JS code and drop it straight into your project' },
   ];
 
   readonly examples: ExampleTemplate[] = [
@@ -475,8 +475,8 @@ export class ToolbarComponent implements OnInit, OnDestroy {
       file: 'assets/example-student-id.template.json',
       sampleData: [
         { name: 'Alice Johnson', studentId: 'STU-2024-001', department: 'Computer Science', year: '2024–25', validUntil: 'Dec 2025' },
-        { name: 'Bob Martinez',  studentId: 'STU-2024-002', department: 'Mathematics',       year: '2024–25', validUntil: 'Dec 2025' },
-        { name: 'Carol Chen',    studentId: 'STU-2024-003', department: 'Physics',           year: '2024–25', validUntil: 'Dec 2025' },
+        { name: 'Bob Martinez', studentId: 'STU-2024-002', department: 'Mathematics', year: '2024–25', validUntil: 'Dec 2025' },
+        { name: 'Carol Chen', studentId: 'STU-2024-003', department: 'Physics', year: '2024–25', validUntil: 'Dec 2025' },
       ]
     },
     {
@@ -485,18 +485,22 @@ export class ToolbarComponent implements OnInit, OnDestroy {
       file: 'assets/example-certificate.template.json',
       sampleData: [
         { organization: 'Tech Academy', tagline: 'Excellence in Education', recipientName: 'Alice Johnson', courseName: 'Full Stack Web Development', date: '15 March 2025', signatoryName: 'Dr. Sarah Lee', signatoryTitle: 'Programme Director', directorName: 'Prof. James Brown', certNo: 'CERT-2025-001' },
-        { organization: 'Tech Academy', tagline: 'Excellence in Education', recipientName: 'Bob Martinez',  courseName: 'Full Stack Web Development', date: '15 March 2025', signatoryName: 'Dr. Sarah Lee', signatoryTitle: 'Programme Director', directorName: 'Prof. James Brown', certNo: 'CERT-2025-002' },
-        { organization: 'Tech Academy', tagline: 'Excellence in Education', recipientName: 'Carol Chen',    courseName: 'Full Stack Web Development', date: '15 March 2025', signatoryName: 'Dr. Sarah Lee', signatoryTitle: 'Programme Director', directorName: 'Prof. James Brown', certNo: 'CERT-2025-003' },
+        { organization: 'Tech Academy', tagline: 'Excellence in Education', recipientName: 'Bob Martinez', courseName: 'Full Stack Web Development', date: '15 March 2025', signatoryName: 'Dr. Sarah Lee', signatoryTitle: 'Programme Director', directorName: 'Prof. James Brown', certNo: 'CERT-2025-002' },
+        { organization: 'Tech Academy', tagline: 'Excellence in Education', recipientName: 'Carol Chen', courseName: 'Full Stack Web Development', date: '15 March 2025', signatoryName: 'Dr. Sarah Lee', signatoryTitle: 'Programme Director', directorName: 'Prof. James Brown', certNo: 'CERT-2025-003' },
       ]
     }
   ];
+
+  get currentElements(): any[] {
+    return this.editorService.elements;
+  }
 
   constructor(
     public editorService: EditorService,
     private pdfService: PdfService,
     private cdr: ChangeDetectorRef,
     private http: HttpClient
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.subs.add(this.editorService.template$.subscribe(t => {
@@ -559,7 +563,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   saveTemplate() {
     const json = this.editorService.exportTemplate();
     const blob = new Blob([json], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `${(this.template?.name ?? 'template').replace(/\s+/g, '_')}.template.json`;

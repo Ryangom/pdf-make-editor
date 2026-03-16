@@ -5,7 +5,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { EditorService } from '../../services/editor.service';
-import { EditorElement, Template } from '../../models/editor.models';
+import { EditorElement, Template, PageSettings } from '../../models/editor.models';
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
@@ -30,21 +30,21 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
           class="page"
           #pageEl
           [class.no-select]="isDragging || isResizing"
-          [style.width.px]="template.page.width"
-          [style.height.px]="template.page.height"
+          [style.width.px]="currentPageSettings.width"
+          [style.height.px]="currentPageSettings.height"
           [style.transform]="'scale(' + scale + ')'"
           [style.transformOrigin]="'top left'"
           (mousedown)="onPageMouseDown($event)"
           (click)="onPageClick($event)">
 
           <!-- Background image -->
-          <img *ngIf="template.page.backgroundImage"
-               [src]="template.page.backgroundImage"
+          <img *ngIf="currentPageSettings.backgroundImage"
+               [src]="currentPageSettings.backgroundImage"
                class="bg-image"
                alt="background" />
 
           <!-- Empty state hint -->
-          <div *ngIf="!template.page.backgroundImage && template.elements.length === 0" class="empty-hint">
+          <div *ngIf="!currentPageSettings.backgroundImage && currentElements.length === 0" class="empty-hint">
             <div class="empty-icon">⊕</div>
             <p>Upload a background image</p>
             <p class="sub">or add elements from the left panel</p>
@@ -52,7 +52,7 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
           <!-- Elements -->
           <div
-            *ngFor="let el of template.elements; trackBy: trackById"
+            *ngFor="let el of currentElements; trackBy: trackById"
             class="element"
             [class.selected]="selectedId === el.id"
             [class.locked]="el.locked"
@@ -62,7 +62,7 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
             [style.width.px]="el.width"
             [style.height.px]="el.height"
             [style.opacity]="el.style.opacity"
-            [style.zIndex]="template.elements.indexOf(el)"
+            [style.zIndex]="currentElements.indexOf(el)"
             (mousedown)="onElementMouseDown($event, el)"
             (click)="$event.stopPropagation()">
 
@@ -133,11 +133,24 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
         <button class="btn btn-icon zoom-btn" (click)="fitToView()" title="Fit to view" style="font-size:10px">FIT</button>
       </div>
 
+      <!-- Page Navigation (when multi-page) -->
+      <div *ngIf="template.hasBackPage" class="page-navigation">
+        <button class="page-nav-btn" [class.active]="currentPageIndex === 0" (click)="switchToPage(0)">
+          <span class="page-icon">📄</span>
+          <span>Front</span>
+        </button>
+        <button class="page-nav-btn" [class.active]="currentPageIndex === 1" (click)="switchToPage(1)">
+          <span class="page-icon">📄</span>
+          <span>Back</span>
+        </button>
+      </div>
+
       <!-- Page info bar -->
       <div class="page-info">
         <span>{{ template.name }}</span>
         <span class="sep">·</span>
-        <span>{{ template.page.width }} × {{ template.page.height }} pts</span>
+        <span *ngIf="template.hasBackPage">{{ currentPageName }} · </span>
+        <span>{{ currentPageSettings.width }} × {{ currentPageSettings.height }} pts</span>
         <span *ngIf="selectedElement" class="sep">·</span>
         <span *ngIf="selectedElement">
           x:{{ Math.round(selectedElement.x) }} y:{{ Math.round(selectedElement.y) }}
@@ -376,6 +389,44 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
     }
 
     /* Page info */
+    /* Page Navigation */
+    .page-navigation {
+      position: fixed;
+      top: 20px;
+      right: 280px;
+      display: flex;
+      gap: 4px;
+      background: rgba(15, 15, 24, 0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(8px);
+      border-radius: 8px;
+      padding: 4px;
+      z-index: 1000;
+    }
+
+    .page-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+
+      &:hover { background: rgba(255,255,255,0.1); color: #fff; }
+      &.active {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .page-icon { font-size: 14px; }
+    }
+
     .page-info {
       position: fixed;
       bottom: 8px;
@@ -402,6 +453,32 @@ export class CanvasComponent implements OnInit, OnDestroy {
   scale = 1;
   Math = Math;
 
+  get currentPageIndex(): number {
+    return this.template.currentPageIndex || 0;
+  }
+
+  get currentPageName(): string {
+    if (this.template.pages && this.template.pages[this.currentPageIndex]) {
+      return this.template.pages[this.currentPageIndex].name;
+    }
+    return 'Front';
+  }
+
+  get currentElements(): EditorElement[] {
+    return this.editorService.elements;
+  }
+
+  get currentPageSettings(): PageSettings {
+    if (this.template.pages && this.template.pages[this.currentPageIndex]) {
+      return this.template.pages[this.currentPageIndex].settings;
+    }
+    return this.template.page; // fallback for backward compatibility
+  }
+
+  get currentBackgroundImage(): string {
+    return this.currentPageSettings.backgroundImage;
+  }
+
   pagePaddingV = 40;
   pagePaddingH = 40;
 
@@ -425,12 +502,12 @@ export class CanvasComponent implements OnInit, OnDestroy {
   private previewRecord: Record<string, string> = {};
 
   get selectedElement(): EditorElement | null {
-    return this.template?.elements.find(e => e.id === this.selectedId) ?? null;
+    return this.currentElements.find(e => e.id === this.selectedId) ?? null;
   }
 
   get horizontalMarks() {
     const marks = [];
-    for (let i = 0; i <= this.template.page.width; i += 50) {
+    for (let i = 0; i <= this.currentPageSettings.width; i += 50) {
       marks.push({ pos: this.pagePaddingH + 20 + i * this.scale, label: i });
     }
     return marks;
@@ -438,7 +515,7 @@ export class CanvasComponent implements OnInit, OnDestroy {
 
   get verticalMarks() {
     const marks = [];
-    for (let i = 0; i <= this.template.page.height; i += 50) {
+    for (let i = 0; i <= this.currentPageSettings.height; i += 50) {
       marks.push({ pos: this.pagePaddingV + 20 + i * this.scale, label: i });
     }
     return marks;
@@ -475,8 +552,8 @@ export class CanvasComponent implements OnInit, OnDestroy {
     const area = this.canvasAreaRef.nativeElement;
     const w = area.clientWidth - this.pagePaddingH * 2 - 40;
     const h = area.clientHeight - this.pagePaddingV * 2 - 40;
-    const scaleX = w / this.template.page.width;
-    const scaleY = h / this.template.page.height;
+    const scaleX = w / this.currentPageSettings.width;
+    const scaleY = h / this.currentPageSettings.height;
     this.scale = Math.min(scaleX, scaleY, 1.5);
     this.cdr.markForCheck();
   }
@@ -535,8 +612,8 @@ export class CanvasComponent implements OnInit, OnDestroy {
     if (this.isDragging && this.dragEl) {
       const dx = (e.clientX - this.dragStartMouseX) / this.scale;
       const dy = (e.clientY - this.dragStartMouseY) / this.scale;
-      const newX = Math.max(0, Math.min(this.dragStartElX + dx, this.template.page.width - this.dragEl.width));
-      const newY = Math.max(0, Math.min(this.dragStartElY + dy, this.template.page.height - this.dragEl.height));
+      const newX = Math.max(0, Math.min(this.dragStartElX + dx, this.currentPageSettings.width - this.dragEl.width));
+      const newY = Math.max(0, Math.min(this.dragStartElY + dy, this.currentPageSettings.height - this.dragEl.height));
       this.editorService.updateElement(this.dragEl.id, { x: newX, y: newY });
       return;
     }
@@ -633,5 +710,9 @@ export class CanvasComponent implements OnInit, OnDestroy {
       'Courier-Bold': 'Courier New, monospace',
     };
     return map[font] ?? font;
+  }
+
+  switchToPage(index: number) {
+    this.editorService.switchToPage(index);
   }
 }

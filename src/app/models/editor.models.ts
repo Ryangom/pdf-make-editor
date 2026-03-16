@@ -56,10 +56,19 @@ export interface PageSettings {
   backgroundImage: string;  // base64 data URL or ''
 }
 
+export interface PageData {
+  settings: PageSettings;
+  elements: EditorElement[];
+  name: string; // "Front" or "Back"
+}
+
 export interface Template {
   name: string;
-  page: PageSettings;
-  elements: EditorElement[];
+  page: PageSettings; // Keep for backward compatibility
+  elements: EditorElement[]; // Keep for backward compatibility
+  pages?: PageData[]; // Optional for multi-page support
+  currentPageIndex?: number; // Optional, defaults to 0
+  hasBackPage?: boolean; // Optional, defaults to false
 }
 
 // ─── Bulk Data ────────────────────────────────────────────────────────────────
@@ -93,8 +102,15 @@ export const DEFAULT_PAGE: PageSettings = {
 
 export const DEFAULT_TEMPLATE: Template = {
   name: 'Untitled Template',
-  page: { ...DEFAULT_PAGE },
-  elements: [],
+  page: { ...DEFAULT_PAGE }, // Keep for backward compatibility
+  elements: [], // Keep for backward compatibility
+  pages: [{
+    name: 'Front',
+    settings: { ...DEFAULT_PAGE },
+    elements: []
+  }],
+  currentPageIndex: 0,
+  hasBackPage: false,
 };
 
 export const FONT_FAMILIES = [

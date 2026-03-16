@@ -29,21 +29,34 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
           class="template-name-input" />
       </div>
 
-      <!-- Page Size -->
-      <div class="panel-section">
-        <div class="section-title">Page Size</div>
-        <select [(ngModel)]="selectedPageSizeLabel" (ngModelChange)="onPageSizeChange($event)">
-          <option *ngFor="let ps of pageSizes" [value]="ps.label">{{ps.label}}</option>
-        </select>
-        <div *ngIf="selectedPageSizeLabel === 'Custom'" class="custom-size">
-          <input type="number" [(ngModel)]="customWidth" placeholder="Width (pts)" min="50" max="2000" />
-          <input type="number" [(ngModel)]="customHeight" placeholder="Height (pts)" min="50" max="2000" />
-          <button class="btn btn-ghost" style="width:100%;margin-top:4px" (click)="applyCustomSize()">Apply</button>
-        </div>
-        <div class="size-display">
-          {{ template?.page?.width }} × {{ template?.page?.height }} pts
-        </div>
-      </div>
+       <!-- Page Size -->
+       <div class="panel-section">
+         <div class="section-title">Page Size</div>
+         <select [(ngModel)]="selectedPageSizeLabel" (ngModelChange)="onPageSizeChange($event)">
+           <option *ngFor="let ps of pageSizes" [value]="ps.label">{{ps.label}}</option>
+         </select>
+         <div *ngIf="selectedPageSizeLabel === 'Custom'" class="custom-size">
+           <input type="number" [(ngModel)]="customWidth" placeholder="Width (pts)" min="50" max="2000" />
+           <input type="number" [(ngModel)]="customHeight" placeholder="Height (pts)" min="50" max="2000" />
+           <button class="btn btn-ghost" style="width:100%;margin-top:4px" (click)="applyCustomSize()">Apply</button>
+         </div>
+         <div class="size-display">
+           {{ template?.page?.width }} × {{ template?.page?.height }} pts
+         </div>
+       </div>
+
+       <!-- Back Page Toggle -->
+       <div class="panel-section">
+         <div class="section-title">Double-sided Card</div>
+         <div class="toggle-row">
+           <span>Enable Back Page</span>
+           <label class="toggle">
+             <input type="checkbox" [ngModel]="template?.hasBackPage" (ngModelChange)="toggleBackPage($event)">
+             <span class="slider"></span>
+           </label>
+         </div>
+         <p class="hint" style="margin-top: 8px;">Creates front and back pages for ID cards, business cards, etc.</p>
+       </div>
 
       <!-- Background Image upload -->
       <div class="panel-section">
@@ -88,13 +101,13 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
       <div class="panel-section layers-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
         <div class="section-title">
           Layers
-          <span class="layer-count" *ngIf="template?.elements?.length">
-            {{ template.elements.length }}
+          <span class="layer-count" *ngIf="currentElements?.length">
+            {{ currentElements.length }}
           </span>
         </div>
-        <div class="layers-list" *ngIf="template?.elements?.length; else emptyLayers">
+        <div class="layers-list" *ngIf="currentElements?.length; else emptyLayers">
           <div
-            *ngFor="let el of template.elements | slice:0 | reverseArr; let i = index"
+            *ngFor="let el of currentElements | slice:0 | reverseArr; let i = index"
             class="layer-item"
             [class.active]="selectedId === el.id"
             [class.locked]="el.locked"
@@ -379,6 +392,10 @@ export class ElementsPaletteComponent implements OnInit, OnDestroy {
 
   private subs = new Subscription();
 
+  get currentElements(): any[] {
+    return this.editorService.elements;
+  }
+
   constructor(
     public editorService: EditorService,
     private cdr: ChangeDetectorRef
@@ -441,5 +458,9 @@ export class ElementsPaletteComponent implements OnInit, OnDestroy {
     e.stopPropagation();
     e.preventDefault();
     this.editorService.setBackgroundImage('');
+  }
+
+  toggleBackPage(enabled: boolean) {
+    this.editorService.toggleBackPage(enabled);
   }
 }

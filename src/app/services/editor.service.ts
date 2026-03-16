@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import {
-  Template, EditorElement, ElementType, ElementStyle,
+  Template, EditorElement, ElementType, ElementStyle, PageData, PageSettings,
   DEFAULT_TEMPLATE, DEFAULT_STYLE, DataRecord
 } from '../models/editor.models';
 
@@ -25,8 +25,30 @@ export class EditorService {
   get selectedId(): string | null { return this._selectedId.value; }
   get bulkData(): DataRecord[] { return this._bulkData.value; }
 
+  // Multi-page support helpers
+  get currentPage(): PageData {
+    if (this.template.pages) {
+      const index = this.template.currentPageIndex || 0;
+      return this.template.pages[index] || this.template.pages[0];
+    }
+    // Fallback to legacy single-page format
+    return {
+      name: 'Front',
+      settings: this.template.page,
+      elements: this.template.elements
+    };
+  }
+
+  get elements(): EditorElement[] {
+    return this.currentPage.elements;
+  }
+
+  get page(): PageSettings {
+    return this.currentPage.settings;
+  }
+
   get selectedElement(): EditorElement | null {
-    return this.template.elements.find(e => e.id === this.selectedId) ?? null;
+    return this.elements.find(e => e.id === this.selectedId) ?? null;
   }
 
   // ─── Snapshot / Undo ───────────────────────────────────────────────────────
@@ -60,8 +82,8 @@ export class EditorService {
     const baseStyle: ElementStyle = { ...DEFAULT_STYLE };
 
     let el: EditorElement;
-    const cx = this.template.page.width / 2;
-    const cy = this.template.page.height / 2;
+    const cx = this.page.width / 2;
+    const cy = this.page.height / 2;
 
     switch (type) {
       case 'text':
@@ -123,50 +145,139 @@ export class EditorService {
         throw new Error(`Unknown element type: ${type}`);
     }
 
-    const t = { ...this.template, elements: [...this.template.elements, el] };
-    this._template.next(t);
+    if (this.template.pages) {
+      // Multi-page mode
+      const currentIndex = this.template.currentPageIndex || 0;
+      const updatedPages = this.template.pages.map((page, index) =>
+        index === currentIndex
+          ? { ...page, elements: [...page.elements, el] }
+          : page
+      );
+      const t = { ...this.template, pages: updatedPages };
+      this._template.next(t);
+    } else {
+      // Legacy single-page mode
+      const t = { ...this.template, elements: [...this.template.elements, el] };
+      this._template.next(t);
+    }
     this._selectedId.next(id);
     return el;
   }
 
   updateElement(id: string, updates: Partial<EditorElement>) {
-    const elements = this.template.elements.map(el =>
-      el.id === id ? { ...el, ...updates } : el
-    );
-    this._template.next({ ...this.template, elements });
+    if (this.template.pages) {
+      // Multi-page mode
+      const currentIndex = this.template.currentPageIndex || 0;
+      const updatedPages = this.template.pages.map((page, index) =>
+        index === currentIndex
+          ? { ...page, elements: page.elements.map(el => el.id === id ? { ...el, ...updates } : el) }
+          : page
+      );
+      this._template.next({ ...this.template, pages: updatedPages });
+    } else {
+      // Legacy single-page mode
+      const elements = this.template.elements.map(el =>
+        el.id === id ? { ...el, ...updates } : el
+      );
+      this._template.next({ ...this.template, elements });
+    }
   }
 
   updateElementStyle(id: string, styleUpdates: Partial<ElementStyle>) {
-    const elements = this.template.elements.map(el =>
-      el.id === id ? { ...el, style: { ...el.style, ...styleUpdates } } : el
-    );
-    this._template.next({ ...this.template, elements });
+    if (this.template.pages) {
+      // Multi-page mode
+      const currentIndex = this.template.currentPageIndex || 0;
+      const updatedPages = this.template.pages.map((page, index) =>
+        index === currentIndex
+          ? {
+            ...page, elements: page.elements.map(el =>
+              el.id === id ? { ...el, style: { ...el.style, ...styleUpdates } } : el
+            )
+          }
+          : page
+      );
+      this._template.next({ ...this.template, pages: updatedPages });
+    } else {
+      // Legacy single-page mode
+      const elements = this.template.elements.map(el =>
+        el.id === id ? { ...el, style: { ...el.style, ...styleUpdates } } : el
+      );
+      this._template.next({ ...this.template, elements });
+    }
   }
 
   deleteElement(id: string) {
     this.snapshot();
-    const elements = this.template.elements.filter(e => e.id !== id);
-    this._template.next({ ...this.template, elements });
+    if (this.template.pages) {
+      // Multi-page mode
+      const currentIndex = this.template.currentPageIndex || 0;
+      const updatedPages = this.template.pages.map((page, index) =>
+        index === currentIndex
+          ? { ...page, elements: page.elements.filter(e => e.id !== id) }
+          : page
+      );
+      this._template.next({ ...this.template, pages: updatedPages });
+    } else {
+      // Legacy single-page mode
+      const elements = this.template.elements.filter(e => e.id !== id);
+      this._template.next({ ...this.template, elements });
+    }
     if (this.selectedId === id) this._selectedId.next(null);
   }
 
   moveElementUp(id: string) {
     this.snapshot();
-    const els = [...this.template.elements];
-    const idx = els.findIndex(e => e.id === id);
-    if (idx < els.length - 1) {
-      [els[idx], els[idx + 1]] = [els[idx + 1], els[idx]];
-      this._template.next({ ...this.template, elements: els });
+    if (this.template.pages) {
+      // Multi-page mode
+      const currentIndex = this.template.currentPageIndex || 0;
+      const updatedPages = this.template.pages.map((page, index) => {
+        if (index === currentIndex) {
+          const els = [...page.elements];
+          const idx = els.findIndex(e => e.id === id);
+          if (idx < els.length - 1) {
+            [els[idx], els[idx + 1]] = [els[idx + 1], els[idx]];
+          }
+          return { ...page, elements: els };
+        }
+        return page;
+      });
+      this._template.next({ ...this.template, pages: updatedPages });
+    } else {
+      // Legacy single-page mode
+      const els = [...this.template.elements];
+      const idx = els.findIndex(e => e.id === id);
+      if (idx < els.length - 1) {
+        [els[idx], els[idx + 1]] = [els[idx + 1], els[idx]];
+        this._template.next({ ...this.template, elements: els });
+      }
     }
   }
 
   moveElementDown(id: string) {
     this.snapshot();
-    const els = [...this.template.elements];
-    const idx = els.findIndex(e => e.id === id);
-    if (idx > 0) {
-      [els[idx], els[idx - 1]] = [els[idx - 1], els[idx]];
-      this._template.next({ ...this.template, elements: els });
+    if (this.template.pages) {
+      // Multi-page mode
+      const currentIndex = this.template.currentPageIndex || 0;
+      const updatedPages = this.template.pages.map((page, index) => {
+        if (index === currentIndex) {
+          const els = [...page.elements];
+          const idx = els.findIndex(e => e.id === id);
+          if (idx > 0) {
+            [els[idx], els[idx - 1]] = [els[idx - 1], els[idx]];
+          }
+          return { ...page, elements: els };
+        }
+        return page;
+      });
+      this._template.next({ ...this.template, pages: updatedPages });
+    } else {
+      // Legacy single-page mode
+      const els = [...this.template.elements];
+      const idx = els.findIndex(e => e.id === id);
+      if (idx > 0) {
+        [els[idx], els[idx - 1]] = [els[idx - 1], els[idx]];
+        this._template.next({ ...this.template, elements: els });
+      }
     }
   }
 
@@ -177,11 +288,67 @@ export class EditorService {
 
   setBackgroundImage(dataUrl: string) {
     this.snapshot();
-    this.updatePage({ backgroundImage: dataUrl });
+    if (this.template.pages) {
+      // Multi-page mode - update current page's background
+      const currentIndex = this.template.currentPageIndex || 0;
+      const updatedPages = this.template.pages.map((page, index) =>
+        index === currentIndex
+          ? { ...page, settings: { ...page.settings, backgroundImage: dataUrl } }
+          : page
+      );
+      this._template.next({ ...this.template, pages: updatedPages });
+    } else {
+      // Legacy single-page mode
+      this.updatePage({ backgroundImage: dataUrl });
+    }
   }
 
   updateTemplateName(name: string) {
     this._template.next({ ...this.template, name });
+  }
+
+  toggleBackPage(enabled: boolean) {
+    this.snapshot();
+    if (enabled) {
+      // Enable back page - initialize pages array if not exists
+      const frontPage = this.template.pages ? this.template.pages[0] : {
+        name: 'Front',
+        settings: { ...this.template.page },
+        elements: [...this.template.elements]
+      };
+      const backPage = {
+        name: 'Back',
+        settings: { ...this.template.page },
+        elements: []
+      };
+      const t = {
+        ...this.template,
+        pages: [frontPage, backPage],
+        currentPageIndex: this.template.currentPageIndex || 0,
+        hasBackPage: true
+      };
+      this._template.next(t);
+    } else {
+      // Disable back page - switch to single page mode
+      const frontPage = this.template.pages ? this.template.pages[0] : null;
+      const t = {
+        ...this.template,
+        page: frontPage ? frontPage.settings : this.template.page,
+        elements: frontPage ? frontPage.elements : this.template.elements,
+        pages: undefined,
+        currentPageIndex: undefined,
+        hasBackPage: false
+      };
+      this._template.next(t);
+    }
+  }
+
+  switchToPage(index: number) {
+    if (this.template.pages && index >= 0 && index < this.template.pages.length) {
+      const t = { ...this.template, currentPageIndex: index };
+      this._template.next(t);
+      this._selectedId.next(null); // Clear selection when switching pages
+    }
   }
 
   // ─── Selection ─────────────────────────────────────────────────────────────
