@@ -186,7 +186,6 @@ Bob Jones,STU002,B"
       display: flex;
       flex-direction: column;
       height: 100%;
-      overflow: hidden;
     }
 
     .dp-header {
@@ -225,6 +224,7 @@ Bob Jones,STU002,B"
       display: flex;
       flex-direction: column;
       gap: 16px;
+      max-height: 70vh;
     }
 
     .dp-section-title {
@@ -465,7 +465,7 @@ export class DataPanelComponent implements OnInit, OnDestroy {
     private editorService: EditorService,
     private pdfService: PdfService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.subs.add(this.editorService.template$.subscribe(t => {

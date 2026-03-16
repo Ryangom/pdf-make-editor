@@ -220,14 +220,31 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+      height: 100%;
+      overflow: hidden;
+    }
+
     .props-panel {
+      height: 100%;
       width: 260px;
+      min-width: 200px;
+      max-width: 320px;
       flex-shrink: 0;
       background: var(--panel);
       border-left: 1px solid var(--border);
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+    }
+
+    .props-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
+      max-height: 80vh;
     }
 
     .props-header {
@@ -241,6 +258,7 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
       text-transform: uppercase;
       letter-spacing: 0.07em;
       color: var(--text-3);
+      flex-shrink: 0;
     }
 
     .el-type-badge {

@@ -210,9 +210,10 @@ type BottomTab = 'data' | 'code';
 
     .bottom-content {
       flex: 1;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
+      max-height: 70vh;
+      overflow: hidden;
     }
   `]
 })

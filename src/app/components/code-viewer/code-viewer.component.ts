@@ -101,7 +101,6 @@ import { Template, DataRecord } from '../../models/editor.models';
       display: flex;
       flex-direction: column;
       height: 100%;
-      overflow: hidden;
     }
 
     .cv-header {
@@ -210,6 +209,7 @@ import { Template, DataRecord } from '../../models/editor.models';
       flex: 1;
       overflow: auto;
       background: var(--bg-0);
+      max-height: 60vh;
     }
 
     .code-pre {
@@ -334,7 +334,7 @@ export class CodeViewerComponent implements OnInit, OnDestroy {
     private editorService: EditorService,
     private pdfService: PdfService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.subs.add(this.editorService.template$.subscribe(t => {
