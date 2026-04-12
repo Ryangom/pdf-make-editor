@@ -404,6 +404,13 @@ export class ElementsPaletteComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.subs.add(this.editorService.template$.subscribe(t => {
       this.template = t;
+      // Update selected page size dropdown when template changes
+      const currentSize = PAGE_SIZES.find(ps =>
+        ps.width === this.editorService.page.width && ps.height === this.editorService.page.height
+      );
+      this.selectedPageSizeLabel = currentSize ? currentSize.label : 'Custom';
+      this.customWidth = this.editorService.page.width;
+      this.customHeight = this.editorService.page.height;
       this.cdr.markForCheck();
     }));
     this.subs.add(this.editorService.selectedId$.subscribe(id => {

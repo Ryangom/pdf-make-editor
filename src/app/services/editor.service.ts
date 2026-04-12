@@ -283,7 +283,24 @@ export class EditorService {
 
   // ─── Page Operations ───────────────────────────────────────────────────────
   updatePage(updates: Partial<typeof this.template.page>) {
-    this._template.next({ ...this.template, page: { ...this.template.page, ...updates } });
+    this.snapshot();
+    if (this.template.pages) {
+      // Multi-page mode - update current active page
+      const currentIndex = this.template.currentPageIndex || 0;
+      const updatedPages = this.template.pages.map((page, index) =>
+        index === currentIndex
+          ? { ...page, settings: { ...page.settings, ...updates } }
+          : page
+      );
+      this._template.next({
+        ...this.template,
+        pages: updatedPages,
+        page: { ...this.template.page, ...updates } // Keep legacy field in sync
+      });
+    } else {
+      // Legacy single-page mode
+      this._template.next({ ...this.template, page: { ...this.template.page, ...updates } });
+    }
   }
 
   setBackgroundImage(dataUrl: string) {
