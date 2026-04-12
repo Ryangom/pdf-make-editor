@@ -29,7 +29,7 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
       </div>
 
       <!-- Page canvas wrapper (handles the scaling) -->
-      <div class="page-wrapper" [style.paddingTop.px]="pagePaddingV" [style.paddingLeft.px]="pagePaddingH">
+      <div class="page-wrapper" [style.transform]="'translate(' + panOffsetX + 'px, ' + panOffsetY + 'px)'">
         <div
           class="page"
           #pageEl
@@ -37,7 +37,7 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
           [style.width.px]="currentPageSettings.width"
           [style.height.px]="currentPageSettings.height"
           [style.transform]="'scale(' + scale + ')'"
-          [style.transformOrigin]="'top left'"
+          [style.transformOrigin]="'center center'"
           (mousedown)="onPageMouseDown($event)"
           (click)="onPageClick($event)"
           [class.hand-cursor]="activeTool === 'hand'">
@@ -186,7 +186,7 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
     }
 
     .ruler {
-      position: sticky;
+      position: absolute;
       background: #141420;
       border-color: rgba(255,255,255,0.08);
       z-index: 10;
@@ -221,13 +221,15 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
     }
 
     .page-wrapper {
-      width: 100%;
-      min-height: calc(100vh - 56px);
-      display: grid;
-      place-items: center;
-      padding: 60px;
-      box-sizing: border-box;
-      transform: translateX(130px);
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      will-change: transform;
     }
 
     .page {
@@ -493,10 +495,12 @@ export class CanvasComponent implements OnInit, OnDestroy {
   Math = Math;
   activeTool: 'select' | 'hand' = 'select';
   isPanning = false;
+  panOffsetX = 0;
+  panOffsetY = 0;
   private panStartX = 0;
   private panStartY = 0;
-  private scrollStartLeft = 0;
-  private scrollStartTop = 0;
+  private panOriginX = 0;
+  private panOriginY = 0;
 
   get currentPageIndex(): number {
     return this.template.currentPageIndex || 0;
@@ -600,11 +604,13 @@ export class CanvasComponent implements OnInit, OnDestroy {
   // ─── Zoom ──────────────────────────────────────────────────────────────────
   fitToView() {
     const area = this.canvasAreaRef.nativeElement;
-    const w = area.clientWidth - this.pagePaddingH * 2 - 40;
-    const h = area.clientHeight - this.pagePaddingV * 2 - 40;
-    const scaleX = w / this.currentPageSettings.width;
-    const scaleY = h / this.currentPageSettings.height;
+    const viewW = area.clientWidth - 24;
+    const viewH = area.clientHeight - 24;
+    const scaleX = (viewW - 80) / this.currentPageSettings.width;
+    const scaleY = (viewH - 80) / this.currentPageSettings.height;
     this.scale = Math.min(scaleX, scaleY, 1.5);
+    this.panOffsetX = 0;
+    this.panOffsetY = 0;
     this.cdr.markForCheck();
   }
 
@@ -615,7 +621,21 @@ export class CanvasComponent implements OnInit, OnDestroy {
   onWheel(e: WheelEvent) {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
-      if (e.deltaY < 0) this.zoomIn(); else this.zoomOut();
+      const area = this.canvasAreaRef.nativeElement;
+      const rect = area.getBoundingClientRect();
+      const viewW = rect.width - 24;
+      const viewH = rect.height - 24;
+      // Cursor position relative to the page center (in screen pixels)
+      const relX = (e.clientX - rect.left - 24 - viewW / 2) - this.panOffsetX;
+      const relY = (e.clientY - rect.top  - 24 - viewH / 2) - this.panOffsetY;
+      const oldScale = this.scale;
+      const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+      this.scale = Math.min(Math.max(this.scale * factor, 0.1), 5);
+      const ratio = this.scale / oldScale;
+      // Shift pan so the point under the cursor stays fixed
+      this.panOffsetX -= relX * (ratio - 1);
+      this.panOffsetY -= relY * (ratio - 1);
+      this.cdr.markForCheck();
     }
   }
 
@@ -647,16 +667,16 @@ export class CanvasComponent implements OnInit, OnDestroy {
     this.isPanning = true;
     this.panStartX = e.clientX;
     this.panStartY = e.clientY;
-    const area = this.canvasAreaRef.nativeElement;
-    this.scrollStartLeft = area.scrollLeft;
-    this.scrollStartTop = area.scrollTop;
+    this.panOriginX = this.panOffsetX;
+    this.panOriginY = this.panOffsetY;
     e.preventDefault();
   }
 
   // ─── Element Drag ──────────────────────────────────────────────────────────
   onElementMouseDown(e: MouseEvent, el: EditorElement) {
-    // In hand mode, route to panning instead of element interaction
+    // In hand mode, pan instead of selecting
     if (this.activeTool === 'hand') {
+      e.stopPropagation();
       this.startPan(e);
       return;
     }
@@ -690,9 +710,9 @@ export class CanvasComponent implements OnInit, OnDestroy {
   onMouseMove(e: MouseEvent) {
     // Pan (hand tool)
     if (this.isPanning) {
-      const area = this.canvasAreaRef.nativeElement;
-      area.scrollLeft = this.scrollStartLeft - (e.clientX - this.panStartX);
-      area.scrollTop  = this.scrollStartTop  - (e.clientY - this.panStartY);
+      this.panOffsetX = this.panOriginX + (e.clientX - this.panStartX);
+      this.panOffsetY = this.panOriginY + (e.clientY - this.panStartY);
+      this.cdr.markForCheck();
       return;
     }
 
