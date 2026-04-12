@@ -7,6 +7,8 @@ import {
 
 let elementCounter = 0;
 
+export type EditorTool = 'select' | 'hand';
+
 @Injectable({ providedIn: 'root' })
 export class EditorService {
   private _template = new BehaviorSubject<Template>(
@@ -14,16 +16,23 @@ export class EditorService {
   );
   private _selectedId = new BehaviorSubject<string | null>(null);
   private _bulkData = new BehaviorSubject<DataRecord[]>([]);
+  private _activeTool = new BehaviorSubject<EditorTool>('select');
   private _history: Template[] = [];
   private _historyIndex = -1;
 
   template$ = this._template.asObservable();
   selectedId$ = this._selectedId.asObservable();
   bulkData$ = this._bulkData.asObservable();
+  activeTool$ = this._activeTool.asObservable();
 
   get template(): Template { return this._template.value; }
   get selectedId(): string | null { return this._selectedId.value; }
   get bulkData(): DataRecord[] { return this._bulkData.value; }
+  get activeTool(): EditorTool { return this._activeTool.value; }
+
+  setActiveTool(tool: EditorTool) {
+    this._activeTool.next(tool);
+  }
 
   // Multi-page support helpers
   get currentPage(): PageData {

@@ -13,11 +13,7 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="palette">
-      <!-- Header -->
-      <div class="palette-header">
-        <span class="logo-mark">⬡</span>
-        <span class="logo-text">PDFMake<span>Editor</span></span>
-      </div>
+
 
       <!-- Template Name -->
       <div class="panel-section template-name-section">
@@ -29,7 +25,30 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
           class="template-name-input" />
       </div>
 
-       <!-- Page Size -->
+       <!-- Tools -->
+      <div class="panel-section">
+        <div class="section-title">Tools</div>
+        <div class="tools-row">
+          <button
+            class="tool-btn"
+            [class.active]="editorService.activeTool === 'select'"
+            (click)="editorService.setActiveTool('select')"
+            title="Select Tool (V)">
+            <span class="tool-icon">⚲</span>
+            <span>Select</span>
+          </button>
+          <button
+            class="tool-btn"
+            [class.active]="editorService.activeTool === 'hand'"
+            (click)="editorService.setActiveTool('hand')"
+            title="Hand Tool (H)">
+            <span class="tool-icon">✋</span>
+            <span>Hand</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page Size -->
        <div class="panel-section">
          <div class="section-title">Page Size</div>
          <select [(ngModel)]="selectedPageSizeLabel" (ngModelChange)="onPageSizeChange($event)">
@@ -154,7 +173,8 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       backdrop-filter: blur(12px);
     }
 
@@ -375,6 +395,54 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
       &:hover {
         background: rgba(248,113,113,.15);
         transform: scale(1.05);
+      }
+    }
+
+    .tools-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .tool-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 8px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-2);
+      font-size: 11px;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-weight: 500;
+
+      .tool-icon {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent-2);
+        transition: transform 0.2s ease;
+      }
+
+      &:hover {
+        background: var(--bg-hover);
+        border-color: var(--accent-border);
+        color: var(--text-1);
+        transform: translateY(-1px);
+
+        .tool-icon {
+          transform: scale(1.15);
+        }
+      }
+
+      &.active {
+        background: var(--accent-dim);
+        border-color: var(--accent-border);
+        color: var(--accent-3);
+        box-shadow: 0 2px 8px rgba(124,90,245,.15);
       }
     }
 
@@ -696,6 +764,9 @@ export class ElementsPaletteComponent implements OnInit, OnDestroy {
     }));
     this.subs.add(this.editorService.selectedId$.subscribe(id => {
       this.selectedId = id;
+      this.cdr.markForCheck();
+    }));
+    this.subs.add(this.editorService.activeTool$.subscribe(() => {
       this.cdr.markForCheck();
     }));
   }

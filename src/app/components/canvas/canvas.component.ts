@@ -15,7 +15,11 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="canvas-area" #canvasArea (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+    <div class="canvas-area" #canvasArea
+      [class.tool-hand]="activeTool === 'hand'"
+      [class.is-panning]="isPanning"
+      (mousedown)="onCanvasAreaMouseDown($event)"
+      (dragover)="onDragOver($event)" (drop)="onDrop($event)">
       <!-- Rulers -->
       <div class="ruler ruler-top">
         <span *ngFor="let mark of horizontalMarks" [style.left.px]="mark.pos" class="ruler-mark">{{mark.label}}</span>
@@ -35,7 +39,8 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
           [style.transform]="'scale(' + scale + ')'"
           [style.transformOrigin]="'top left'"
           (mousedown)="onPageMouseDown($event)"
-          (click)="onPageClick($event)">
+          (click)="onPageClick($event)"
+          [class.hand-cursor]="activeTool === 'hand'">
 
           <!-- Background image -->
           <img *ngIf="currentPageSettings.backgroundImage"
@@ -64,7 +69,8 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
             [style.opacity]="el.style.opacity"
             [style.zIndex]="currentElements.indexOf(el)"
             (mousedown)="onElementMouseDown($event, el)"
-            (click)="$event.stopPropagation()">
+            (click)="$event.stopPropagation()"
+            [style.cursor]="activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : (el.locked ? 'not-allowed' : 'move')">
 
             <!-- TEXT -->
             <div *ngIf="el.type === 'text'"
@@ -168,6 +174,15 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
       background-image:
         radial-gradient(circle at 24px 24px, rgba(124,90,245,0.04) 1px, transparent 0);
       background-size: 24px 24px;
+      cursor: default;
+
+      &.tool-hand {
+        cursor: grab;
+      }
+      &.is-panning {
+        cursor: grabbing !important;
+        user-select: none;
+      }
     }
 
     .ruler {
@@ -279,6 +294,10 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
       &.locked { cursor: not-allowed; opacity: 0.7; }
       &.hidden-el { opacity: 0.3; }
+    }
+
+    .hand-cursor {
+      cursor: grab;
     }
 
     .el-text {
@@ -472,6 +491,12 @@ export class CanvasComponent implements OnInit, OnDestroy {
   selectedId: string | null = null;
   scale = 1;
   Math = Math;
+  activeTool: 'select' | 'hand' = 'select';
+  isPanning = false;
+  private panStartX = 0;
+  private panStartY = 0;
+  private scrollStartLeft = 0;
+  private scrollStartTop = 0;
 
   get currentPageIndex(): number {
     return this.template.currentPageIndex || 0;
@@ -561,6 +586,11 @@ export class CanvasComponent implements OnInit, OnDestroy {
     }));
 
     setTimeout(() => this.fitToView(), 100);
+
+    this.subs.add(this.editorService.activeTool$.subscribe(tool => {
+      this.activeTool = tool;
+      this.cdr.markForCheck();
+    }));
   }
 
   ngOnDestroy() {
@@ -589,19 +619,48 @@ export class CanvasComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ─── Canvas Area MouseDown (hand panning on empty area) ──────────────────
+  onCanvasAreaMouseDown(e: MouseEvent) {
+    // Only start pan if clicking directly on canvas backdrop (not on page/elements)
+    if (this.activeTool === 'hand') {
+      this.startPan(e);
+    }
+  }
+
   // ─── Canvas Click (deselect) ───────────────────────────────────────────────
   onPageClick(e: MouseEvent) {
+    if (this.activeTool === 'hand') return; // hand tool: never deselect
     if (!this.isDragging && !this.isResizing) {
       this.editorService.selectElement(null);
     }
   }
 
   onPageMouseDown(e: MouseEvent) {
-    // Only if direct click on page bg
+    if (this.activeTool === 'hand') {
+      e.stopPropagation(); // prevent canvas-area from firing twice
+      this.startPan(e);
+    }
+  }
+
+  // ─── Pan Helpers ───────────────────────────────────────────────────────────
+  private startPan(e: MouseEvent) {
+    this.isPanning = true;
+    this.panStartX = e.clientX;
+    this.panStartY = e.clientY;
+    const area = this.canvasAreaRef.nativeElement;
+    this.scrollStartLeft = area.scrollLeft;
+    this.scrollStartTop = area.scrollTop;
+    e.preventDefault();
   }
 
   // ─── Element Drag ──────────────────────────────────────────────────────────
   onElementMouseDown(e: MouseEvent, el: EditorElement) {
+    // In hand mode, route to panning instead of element interaction
+    if (this.activeTool === 'hand') {
+      this.startPan(e);
+      return;
+    }
+
     e.stopPropagation();
     this.editorService.selectElement(el.id);
     if (el.locked) return;
@@ -629,6 +688,14 @@ export class CanvasComponent implements OnInit, OnDestroy {
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(e: MouseEvent) {
+    // Pan (hand tool)
+    if (this.isPanning) {
+      const area = this.canvasAreaRef.nativeElement;
+      area.scrollLeft = this.scrollStartLeft - (e.clientX - this.panStartX);
+      area.scrollTop  = this.scrollStartTop  - (e.clientY - this.panStartY);
+      return;
+    }
+
     if (this.isDragging && this.dragEl) {
       const dx = (e.clientX - this.dragStartMouseX) / this.scale;
       const dy = (e.clientY - this.dragStartMouseY) / this.scale;
@@ -657,12 +724,14 @@ export class CanvasComponent implements OnInit, OnDestroy {
 
   @HostListener('document:mouseup')
   onMouseUp() {
+    this.isPanning = false;
     if (this.isDragging) { this.editorService['snapshot']?.(); }
     this.isDragging = false;
     this.isResizing = false;
     this.dragEl = null;
     this.resizeEl = null;
     this.resizeHandle = null;
+    this.cdr.markForCheck();
   }
 
   // ─── Keyboard shortcuts ───────────────────────────────────────────────────
@@ -670,6 +739,18 @@ export class CanvasComponent implements OnInit, OnDestroy {
   onKeyDown(e: KeyboardEvent) {
     const tag = (e.target as HTMLElement).tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    // Tool switching — like Figma
+    if (e.key === 'v' || e.key === 'V') { this.editorService.setActiveTool('select'); return; }
+    if (e.key === 'h' || e.key === 'H') { this.editorService.setActiveTool('hand'); return; }
+
+    // Space bar = temporary hand tool (Figma behaviour)
+    if (e.code === 'Space' && !e.repeat && this.activeTool === 'select') {
+      this._previousTool = 'select';
+      this.editorService.setActiveTool('hand');
+      e.preventDefault();
+      return;
+    }
 
     if (e.key === 'Delete' || e.key === 'Backspace') {
       if (this.selectedId) {
@@ -695,6 +776,19 @@ export class CanvasComponent implements OnInit, OnDestroy {
       this.editorService.updateElement(this.selectedId, updates);
     }
   }
+
+  // Release Space bar → restore previous tool
+  @HostListener('document:keyup', ['$event'])
+  onKeyUp(e: KeyboardEvent) {
+    const tag = (e.target as HTMLElement).tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.code === 'Space' && this._previousTool) {
+      this.editorService.setActiveTool(this._previousTool);
+      this._previousTool = null;
+    }
+  }
+
+  private _previousTool: 'select' | 'hand' | null = null;
 
   // ─── Drag-over for file drop ───────────────────────────────────────────────
   onDragOver(e: DragEvent) { e.preventDefault(); }
