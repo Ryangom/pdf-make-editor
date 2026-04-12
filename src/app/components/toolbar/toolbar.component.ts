@@ -180,14 +180,16 @@ interface ExampleTemplate {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 52px;
-      padding: 0 14px;
-      background: var(--panel);
+      height: 56px;
+      padding: 0 16px;
+      background: linear-gradient(180deg, var(--panel) 0%, rgba(26, 27, 38, 0.98) 100%);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
-      gap: 6px;
+      gap: 8px;
       position: relative;
       z-index: 200;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
 
     .tb-left, .tb-center, .tb-right {
