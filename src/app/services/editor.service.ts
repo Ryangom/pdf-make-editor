@@ -150,6 +150,133 @@ export class EditorService {
         };
         break;
 
+      case 'line':
+        el = {
+          id, type, label: `Line ${elementCounter}`,
+          x: cx - 75, y: cy - 2,
+          width: 150, height: 4,
+          content: '',
+          style: {
+            ...baseStyle,
+            lineColor: '#7c5af5',
+            lineWidth: 2,
+            lineDash: 0,
+            lineCapStyle: 'round',
+            lineAngle: 0,
+          },
+          locked: false, visible: true
+        };
+        break;
+
+      case 'ellipse':
+        el = {
+          id, type, label: `Ellipse ${elementCounter}`,
+          x: cx - 40, y: cy - 40,
+          width: 80, height: 80,
+          content: '',
+          style: {
+            ...baseStyle,
+            backgroundColor: 'rgba(124,90,245,0.15)',
+            borderColor: '#7c5af5',
+            borderWidth: 2,
+          },
+          locked: false, visible: true
+        };
+        break;
+
+      case 'table':
+        const tableData = {
+          rows: 3,
+          cols: 3,
+          colWidths: ['*', '*', '*'] as (number | string)[],
+          headerRows: 1,
+          alternateRowFill: '#f5f5f5',
+          defaultBorderColor: '#cccccc',
+          defaultFontSize: 10,
+          cells: Array(3).fill(null).map((_, row) =>
+            Array(3).fill(null).map((__, col) => ({
+              text: row === 0 ? `Header ${col + 1}` : `Cell ${row}-${col + 1}`,
+              bold: row === 0,
+              fontSize: row === 0 ? 10 : 9,
+              alignment: 'center',
+            }))
+          ),
+        };
+        el = {
+          id, type, label: `Table ${elementCounter}`,
+          x: cx - 100, y: cy - 60,
+          width: 200, height: 120,
+          content: '',
+          style: { ...baseStyle },
+          locked: false, visible: true,
+          tableData,
+        };
+        break;
+
+      case 'qrcode':
+        el = {
+          id, type, label: `QR Code ${elementCounter}`,
+          x: cx - 50, y: cy - 50,
+          width: 100, height: 100,
+          content: '{{qrcode}}',
+          style: {
+            ...baseStyle,
+            qrFit: 100,
+            qrForeground: '#000000',
+            qrBackground: '#ffffff',
+            qrEcc: 'M',
+          },
+          locked: false, visible: true
+        };
+        break;
+
+      case 'list':
+        el = {
+          id, type, label: `List ${elementCounter}`,
+          x: cx - 80, y: cy - 40,
+          width: 160, height: 80,
+          content: '',
+          style: { ...baseStyle },
+          locked: false, visible: true,
+          listItems: [
+            { text: 'Item 1', bold: false, fontSize: 12 },
+            { text: 'Item 2', bold: false, fontSize: 12 },
+            { text: 'Item 3', bold: false, fontSize: 12 },
+          ],
+          listType: 'ul',
+          listStyle: 'disc',
+          listMarkerColor: '#7c5af5',
+          itemSpacing: 8,
+        };
+        break;
+
+      case 'columns':
+        el = {
+          id, type, label: `Columns ${elementCounter}`,
+          x: cx - 100, y: cy - 30,
+          width: 200, height: 60,
+          content: '',
+          style: { ...baseStyle },
+          locked: false, visible: true,
+          columnDefs: [
+            { text: 'Column 1', width: '*', fontSize: 12, color: '#1a1a2e', bold: false, alignment: 'left' },
+            { text: 'Column 2', width: '*', fontSize: 12, color: '#1a1a2e', bold: false, alignment: 'left' },
+          ],
+          columnGap: 20,
+        };
+        break;
+
+      case 'svg':
+        el = {
+          id, type, label: `SVG ${elementCounter}`,
+          x: cx - 50, y: cy - 50,
+          width: 100, height: 100,
+          content: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#7c5af5"/></svg>',
+          style: { ...baseStyle },
+          locked: false, visible: true
+        };
+        break;
+
       default:
         throw new Error(`Unknown element type: ${type}`);
     }

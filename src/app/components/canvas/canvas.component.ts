@@ -114,6 +114,63 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
                  [style.borderRadius.px]="el.style.borderRadius">
             </div>
 
+            <!-- LINE -->
+            <div *ngIf="el.type === 'line'"
+                 class="el-line"
+                 [style.backgroundColor]="el.style.lineColor"
+                 [style.height.px]="el.style.lineWidth || 2"
+                 [style.borderTop]="el.style.lineDash > 0 ? el.style.lineDash + 'px dashed ' + el.style.lineColor : 'none'">
+            </div>
+
+            <!-- ELLIPSE -->
+            <div *ngIf="el.type === 'ellipse'"
+                 class="el-ellipse"
+                 [style.backgroundColor]="el.style.backgroundColor"
+                 [style.borderWidth.px]="el.style.borderWidth"
+                 [style.borderColor]="el.style.borderColor"
+                 [style.borderStyle]="el.style.borderWidth > 0 ? 'solid' : 'none'">
+            </div>
+
+            <!-- TABLE -->
+            <div *ngIf="el.type === 'table'" class="el-table">
+              <table>
+                <tr *ngFor="let row of el.tableData?.cells; let ri = index">
+                  <td *ngFor="let cell of row"
+                      [style.fontSize.px]="cell.fontSize || 10"
+                      [style.fontWeight]="cell.bold ? 'bold' : 'normal'"
+                      [style.textAlign]="cell.alignment || 'center'">
+                    {{ cell.text }}
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- QR CODE -->
+            <div *ngIf="el.type === 'qrcode'" class="el-qrcode">
+              <div class="qr-placeholder">▣</div>
+              <span class="qr-label">{{ resolvePreview(el.content) }}</span>
+            </div>
+
+            <!-- LIST -->
+            <div *ngIf="el.type === 'list'" class="el-list">
+              <ul *ngIf="el.listType === 'ul'" [style.listStyleType]="el.listStyle || 'disc'" [style.color]="el.listMarkerColor">
+                <li *ngFor="let item of el.listItems">{{ item.text }}</li>
+              </ul>
+              <ol *ngIf="el.listType === 'ol'" [style.listStyleType]="el.listStyle || 'decimal'" [style.color]="el.listMarkerColor">
+                <li *ngFor="let item of el.listItems">{{ item.text }}</li>
+              </ol>
+            </div>
+
+            <!-- COLUMNS -->
+            <div *ngIf="el.type === 'columns'" class="el-columns" [style.gap.px]="el.columnGap || 20">
+              <div *ngFor="let col of el.columnDefs" class="el-col">
+                <span [style.fontSize.px]="col.fontSize" [style.color]="col.color" [style.fontWeight]="col.bold ? 'bold' : 'normal'">{{ resolvePreview(col.text) }}</span>
+              </div>
+            </div>
+
+            <!-- SVG -->
+            <div *ngIf="el.type === 'svg'" class="el-svg" [innerHTML]="el.content"></div>
+
             <!-- Selection handles (only when selected and not locked) -->
             <ng-container *ngIf="selectedId === el.id && !el.locked">
               <div class="resize-handle nw" (mousedown)="onResizeMouseDown($event, el, 'nw')"></div>
@@ -343,6 +400,96 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
       width: 100%;
       height: 100%;
       box-sizing: border-box;
+    }
+
+    /* Line element */
+    .el-line {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Ellipse element */
+    .el-ellipse {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      box-sizing: border-box;
+    }
+
+    /* Table element */
+    .el-table {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-size: 10px;
+    }
+    .el-table table {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+    }
+    .el-table td {
+      border: 1px solid #ccc;
+      padding: 4px;
+    }
+
+    /* QR Code element */
+    .el-qrcode {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f8f8f8;
+    }
+    .el-qrcode .qr-placeholder {
+      font-size: 48px;
+      color: #ccc;
+    }
+    .el-qrcode .qr-label {
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* List element */
+    .el-list {
+      width: 100%;
+      height: 100%;
+      padding: 4px;
+      font-size: 12px;
+    }
+    .el-list ul, .el-list ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* Columns element */
+    .el-columns {
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+    .el-col {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      font-size: 12px;
+    }
+
+    /* SVG element */
+    .el-svg {
+      width: 100%;
+      height: 100%;
+    }
+    .el-svg svg {
+      width: 100%;
+      height: 100%;
     }
 
     /* Resize handles */
@@ -627,7 +774,7 @@ export class CanvasComponent implements OnInit, OnDestroy {
       const viewH = rect.height - 24;
       // Cursor position relative to the page center (in screen pixels)
       const relX = (e.clientX - rect.left - 24 - viewW / 2) - this.panOffsetX;
-      const relY = (e.clientY - rect.top  - 24 - viewH / 2) - this.panOffsetY;
+      const relY = (e.clientY - rect.top - 24 - viewH / 2) - this.panOffsetY;
       const oldScale = this.scale;
       const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
       this.scale = Math.min(Math.max(this.scale * factor, 0.1), 5);

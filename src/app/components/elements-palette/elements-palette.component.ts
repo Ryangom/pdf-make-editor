@@ -54,6 +54,24 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
          <select [(ngModel)]="selectedPageSizeLabel" (ngModelChange)="onPageSizeChange($event)">
            <option *ngFor="let ps of pageSizes" [value]="ps.label">{{ps.label}}</option>
          </select>
+         <div class="orientation-buttons">
+           <button
+             class="orient-btn"
+             [class.active]="!isLandscape"
+             (click)="setOrientation('portrait')"
+             title="Portrait">
+             <div class="orient-icon portrait"></div>
+             <span>Portrait</span>
+           </button>
+           <button
+             class="orient-btn"
+             [class.active]="isLandscape"
+             (click)="setOrientation('landscape')"
+             title="Landscape">
+             <div class="orient-icon landscape"></div>
+             <span>Landscape</span>
+           </button>
+         </div>
          <div *ngIf="selectedPageSizeLabel === 'Custom'" class="custom-size">
            <input type="number" [(ngModel)]="customWidth" placeholder="Width (pts)" min="50" max="2000" />
            <input type="number" [(ngModel)]="customHeight" placeholder="Height (pts)" min="50" max="2000" />
@@ -112,6 +130,34 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
           <button class="el-type-btn" (click)="addElement('roundrect')">
             <span class="el-icon">⧫</span>
             <span>Round</span>
+          </button>
+          <button class="el-type-btn" (click)="addElement('line')">
+            <span class="el-icon">─</span>
+            <span>Line</span>
+          </button>
+          <button class="el-type-btn" (click)="addElement('ellipse')">
+            <span class="el-icon">◯</span>
+            <span>Ellipse</span>
+          </button>
+          <button class="el-type-btn" (click)="addElement('table')">
+            <span class="el-icon">▦</span>
+            <span>Table</span>
+          </button>
+          <button class="el-type-btn" (click)="addElement('qrcode')">
+            <span class="el-icon">▣</span>
+            <span>QR Code</span>
+          </button>
+          <button class="el-type-btn" (click)="addElement('list')">
+            <span class="el-icon">☰</span>
+            <span>List</span>
+          </button>
+          <button class="el-type-btn" (click)="addElement('columns')">
+            <span class="el-icon">≡</span>
+            <span>Columns</span>
+          </button>
+          <button class="el-type-btn" (click)="addElement('svg')">
+            <span class="el-icon">◇</span>
+            <span>SVG</span>
           </button>
         </div>
       </div>
@@ -176,6 +222,7 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
       overflow-y: auto;
       overflow-x: hidden;
       backdrop-filter: blur(12px);
+      height: 100vh;
     }
 
     .palette-header {
@@ -324,6 +371,57 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
           border-color: var(--accent);
           box-shadow: 0 0 0 3px rgba(124,90,245,.15);
         }
+      }
+    }
+
+    .orientation-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .orient-btn {
+      padding: 10px 6px 8px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-2);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      font-weight: 500;
+
+      &:hover {
+        background: var(--bg-hover);
+        border-color: var(--accent-border);
+        transform: translateY(-1px);
+      }
+
+      &.active {
+        background: var(--accent-dim);
+        border-color: var(--accent-border);
+        color: var(--accent-3);
+        box-shadow: 0 2px 6px rgba(124,90,245,.15);
+      }
+    }
+
+    .orient-icon {
+      width: 24px;
+      border: 2px solid currentColor;
+      border-radius: 3px;
+      opacity: 0.7;
+
+      &.portrait {
+        height: 34px;
+      }
+
+      &.landscape {
+        height: 18px;
       }
     }
 
@@ -739,6 +837,18 @@ export class ElementsPaletteComponent implements OnInit, OnDestroy {
   customWidth = 595;
   customHeight = 842;
 
+  get isLandscape(): boolean {
+    return this.editorService.page.width > this.editorService.page.height;
+  }
+
+  setOrientation(mode: 'portrait' | 'landscape') {
+    const currentW = this.editorService.page.width;
+    const currentH = this.editorService.page.height;
+    if ((mode === 'landscape' && currentW < currentH) || (mode === 'portrait' && currentW > currentH)) {
+      this.editorService.updatePage({ width: currentH, height: currentW });
+    }
+  }
+
   private subs = new Subscription();
 
   get currentElements(): any[] {
@@ -783,7 +893,20 @@ export class ElementsPaletteComponent implements OnInit, OnDestroy {
   toggleLocked(el: EditorElement) { this.editorService.updateElement(el.id, { locked: !el.locked }); }
 
   getTypeIcon(type: string) {
-    return type === 'text' ? 'T' : type === 'image' ? '🖼' : type === 'roundrect' ? '⧫' : '▭';
+    const icons: Record<string, string> = {
+      'text': 'T',
+      'image': '🖼',
+      'rectangle': '▭',
+      'roundrect': '⧫',
+      'line': '─',
+      'ellipse': '◯',
+      'table': '▦',
+      'qrcode': '▣',
+      'list': '☰',
+      'columns': '≡',
+      'svg': '◇',
+    };
+    return icons[type] || '?';
   }
 
   onPageSizeChange(label: string) {

@@ -22,6 +22,107 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
         <div class="no-sel-icon">✦</div>
         <p>Select an element</p>
         <p class="sub">to edit its properties</p>
+
+        <!-- Page Settings when no element selected -->
+        <div class="page-settings-section">
+          <div class="section-title" style="margin-top: 20px;">Page Settings</div>
+
+          <!-- Header -->
+          <div class="panel-section" style="padding-bottom: 8px;">
+            <div class="form-group full">
+              <label>Header Text</label>
+              <input type="text" [ngModel]="pageSettings.headerText || ''"
+                (ngModelChange)="updatePage({headerText: $event})"
+                placeholder="{{varPlaceholder}} - My Header" />
+            </div>
+            <div class="prop-grid">
+              <div class="form-group">
+                <label>Font Size</label>
+                <input type="number" [ngModel]="pageSettings.headerFontSize || 12"
+                  (ngModelChange)="updatePage({headerFontSize: +$event})" min="6" max="36" />
+              </div>
+              <div class="form-group">
+                <label>Align</label>
+                <select [ngModel]="pageSettings.headerAlignment || 'center'"
+                  (ngModelChange)="updatePage({headerAlignment: $event})">
+                  <option value="left">Left</option>
+                  <option value="center">Center</option>
+                  <option value="right">Right</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="panel-section" style="padding-bottom: 8px;">
+            <div class="form-group full">
+              <label>Footer Text</label>
+              <input type="text" [ngModel]="pageSettings.footerText || ''"
+                (ngModelChange)="updatePage({footerText: $event})"
+                placeholder="Footer text" />
+            </div>
+            <div class="prop-grid">
+              <div class="form-group">
+                <label>Font Size</label>
+                <input type="number" [ngModel]="pageSettings.footerFontSize || 12"
+                  (ngModelChange)="updatePage({footerFontSize: +$event})" min="6" max="36" />
+              </div>
+              <div class="form-group">
+                <label>Align</label>
+                <select [ngModel]="pageSettings.footerAlignment || 'center'"
+                  (ngModelChange)="updatePage({footerAlignment: $event})">
+                  <option value="left">Left</option>
+                  <option value="center">Center</option>
+                  <option value="right">Right</option>
+                </select>
+              </div>
+            </div>
+            <div class="toggle-row" style="margin-top: 8px;">
+              <span>Show Page Numbers</span>
+              <label class="toggle">
+                <input type="checkbox" [ngModel]="pageSettings.showPageNumbers !== false"
+                  (ngModelChange)="updatePage({showPageNumbers: $event})">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Watermark -->
+          <div class="panel-section" style="padding-bottom: 8px;">
+            <div class="form-group full">
+              <label>Watermark Text</label>
+              <input type="text" [ngModel]="pageSettings.watermark || ''"
+                (ngModelChange)="updatePage({watermark: $event})"
+                placeholder="DRAFT" />
+            </div>
+            <div class="prop-grid">
+              <div class="form-group">
+                <label>Font Size</label>
+                <input type="number" [ngModel]="pageSettings.watermarkFontSize || 80"
+                  (ngModelChange)="updatePage({watermarkFontSize: +$event})" min="20" max="200" />
+              </div>
+              <div class="form-group">
+                <label>Angle</label>
+                <input type="number" [ngModel]="pageSettings.watermarkAngle || 45"
+                  (ngModelChange)="updatePage({watermarkAngle: +$event})" min="-180" max="180" />
+              </div>
+            </div>
+            <div class="color-row" style="margin-top: 8px;">
+              <span class="color-label">Color</span>
+              <div class="color-picker-wrap">
+                <input type="color" [ngModel]="toHex(pageSettings.watermarkColor || '#cccccc')"
+                  (ngModelChange)="updatePage({watermarkColor: $event})" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 8px;">
+              <label>Opacity: {{ pct(pageSettings.watermarkOpacity || 0.3) }}%</label>
+              <input type="range" min="0" max="1" step="0.05"
+                [ngModel]="pageSettings.watermarkOpacity || 0.3"
+                (ngModelChange)="updatePage({watermarkOpacity: +$event})"
+                class="range-input" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Element properties -->
@@ -137,6 +238,7 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
                 <option value="left">Left</option>
                 <option value="center">Center</option>
                 <option value="right">Right</option>
+                <option value="justify">Justify</option>
               </select>
             </div>
             <div class="form-group">
@@ -150,6 +252,23 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
               (click)="updateStyle({bold: !el.style.bold})"><b>B</b></button>
             <button class="style-btn" [class.active]="el.style.italic"
               (click)="updateStyle({italic: !el.style.italic})"><i>I</i></button>
+            <button class="style-btn" [class.active]="el.style.underline"
+              (click)="updateStyle({underline: !el.style.underline})"><u>U</u></button>
+            <button class="style-btn" [class.active]="el.style.strike"
+              (click)="updateStyle({strike: !el.style.strike})"><s>S</s></button>
+          </div>
+          <div class="prop-grid" style="margin-top: 8px;">
+            <div class="form-group">
+              <label>Char Spacing</label>
+              <input type="number" [ngModel]="el.style.characterSpacing || 0"
+                (ngModelChange)="updateStyle({characterSpacing: +$event})" min="0" max="20" />
+            </div>
+            <div class="form-group">
+              <label>Link URL</label>
+              <input type="text" [ngModel]="el.style.linkUrl || ''"
+                (ngModelChange)="updateStyle({linkUrl: $event})"
+                placeholder="https://..." />
+            </div>
           </div>
         </div>
 
@@ -208,6 +327,193 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
             [ngModel]="el.style.opacity"
             (ngModelChange)="updateStyle({opacity: +$event})"
             class="range-input" />
+        </div>
+
+        <!-- Line Element Properties -->
+        <div class="panel-section" *ngIf="el.type === 'line'">
+          <div class="section-title">Line Style</div>
+          <div class="color-row">
+            <span class="color-label">Color</span>
+            <div class="color-picker-wrap">
+              <input type="color" [ngModel]="toHex(el.style.lineColor)"
+                (ngModelChange)="updateStyle({lineColor: $event})" />
+              <input type="text" [ngModel]="el.style.lineColor"
+                (ngModelChange)="updateStyle({lineColor: $event})"
+                class="color-text-input" />
+            </div>
+          </div>
+          <div class="prop-grid" style="margin-top: 8px;">
+            <div class="form-group">
+              <label>Width</label>
+              <input type="number" [ngModel]="el.style.lineWidth"
+                (ngModelChange)="updateStyle({lineWidth: +$event})" min="1" max="50" />
+            </div>
+            <div class="form-group">
+              <label>Dash</label>
+              <input type="number" [ngModel]="el.style.lineDash || 0"
+                (ngModelChange)="updateStyle({lineDash: +$event})" min="0" max="20" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Ellipse Element Properties -->
+        <div class="panel-section" *ngIf="el.type === 'ellipse'">
+          <div class="section-title">Ellipse Style</div>
+          <div class="color-row" style="margin-bottom: 8px;">
+            <span class="color-label">Fill</span>
+            <div class="color-picker-wrap">
+              <input type="color" [ngModel]="toHex(el.style.backgroundColor)"
+                (ngModelChange)="updateStyle({backgroundColor: $event})" />
+              <input type="text" [ngModel]="el.style.backgroundColor"
+                (ngModelChange)="updateStyle({backgroundColor: $event})"
+                class="color-text-input" placeholder="transparent" />
+            </div>
+          </div>
+          <div class="color-row">
+            <span class="color-label">Border</span>
+            <div class="color-picker-wrap">
+              <input type="color" [ngModel]="toHex(el.style.borderColor)"
+                (ngModelChange)="updateStyle({borderColor: $event})" />
+              <input type="text" [ngModel]="el.style.borderColor"
+                (ngModelChange)="updateStyle({borderColor: $event})"
+                class="color-text-input" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 8px;">
+            <label>Border Width</label>
+            <input type="number" [ngModel]="el.style.borderWidth"
+              (ngModelChange)="updateStyle({borderWidth: +$event})" min="0" max="20" />
+          </div>
+        </div>
+
+        <!-- Table Element Properties -->
+        <div class="panel-section" *ngIf="el.type === 'table'">
+          <div class="section-title">Table Settings</div>
+          <div class="prop-grid">
+            <div class="form-group">
+              <label>Rows</label>
+              <input type="number" [ngModel]="el.tableData?.rows || 3"
+                (ngModelChange)="updateTableRows($event)" min="1" max="20" />
+            </div>
+            <div class="form-group">
+              <label>Cols</label>
+              <input type="number" [ngModel]="el.tableData?.cols || 3"
+                (ngModelChange)="updateTableCols($event)" min="1" max="10" />
+            </div>
+            <div class="form-group">
+              <label>Header Rows</label>
+              <input type="number" [ngModel]="el.tableData?.headerRows || 1"
+                (ngModelChange)="updateTableData({headerRows: +$event})" min="0" max="5" />
+            </div>
+            <div class="form-group">
+              <label>Alt Row Fill</label>
+              <input type="color" [ngModel]="toHex(el.tableData?.alternateRowFill || '#f5f5f5')"
+                (ngModelChange)="updateTableData({alternateRowFill: $event})" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 8px;">
+            <label>Default Border</label>
+            <input type="color" [ngModel]="toHex(el.tableData?.defaultBorderColor || '#cccccc')"
+              (ngModelChange)="updateTableData({defaultBorderColor: $event})" />
+          </div>
+        </div>
+
+        <!-- QR Code Element Properties -->
+        <div class="panel-section" *ngIf="el.type === 'qrcode'">
+          <div class="section-title">QR Code</div>
+          <div class="form-group full">
+            <label>Content (supports {{varPlaceholder}})</label>
+            <input type="text" [ngModel]="el.content"
+              (ngModelChange)="update({content: $event})"
+              placeholder="https://example.com" />
+          </div>
+          <div class="prop-grid" style="margin-top: 8px;">
+            <div class="form-group">
+              <label>ECC Level</label>
+              <select [ngModel]="el.style.qrEcc || 'M'"
+                (ngModelChange)="updateStyle({qrEcc: $event})">
+                <option value="L">Low (7%)</option>
+                <option value="M">Medium (15%)</option>
+                <option value="Q">Quartile (25%)</option>
+                <option value="H">High (30%)</option>
+              </select>
+            </div>
+          </div>
+          <div class="color-row" style="margin-top: 8px;">
+            <span class="color-label">Foreground</span>
+            <div class="color-picker-wrap">
+              <input type="color" [ngModel]="toHex(el.style.qrForeground)"
+                (ngModelChange)="updateStyle({qrForeground: $event})" />
+            </div>
+          </div>
+          <div class="color-row" style="margin-top: 8px;">
+            <span class="color-label">Background</span>
+            <div class="color-picker-wrap">
+              <input type="color" [ngModel]="toHex(el.style.qrBackground)"
+                (ngModelChange)="updateStyle({qrBackground: $event})" />
+            </div>
+          </div>
+        </div>
+
+        <!-- List Element Properties -->
+        <div class="panel-section" *ngIf="el.type === 'list'">
+          <div class="section-title">List Settings</div>
+          <div class="prop-grid">
+            <div class="form-group">
+              <label>Type</label>
+              <select [ngModel]="el.listType || 'ul'"
+                (ngModelChange)="update({listType: $event})">
+                <option value="ul">Bullet</option>
+                <option value="ol">Numbered</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Style</label>
+              <select [ngModel]="el.listStyle || 'disc'"
+                (ngModelChange)="update({listStyle: $event})">
+                <option *ngIf="el.listType === 'ul'" value="disc">Disc</option>
+                <option *ngIf="el.listType === 'ul'" value="circle">Circle</option>
+                <option *ngIf="el.listType === 'ul'" value="square">Square</option>
+                <option *ngIf="el.listType === 'ol'" value="decimal">Decimal</option>
+                <option *ngIf="el.listType === 'ol'" value="lower-alpha">a, b, c</option>
+                <option *ngIf="el.listType === 'ol'" value="upper-alpha">A, B, C</option>
+              </select>
+            </div>
+          </div>
+          <div class="color-row" style="margin-top: 8px;">
+            <span class="color-label">Marker</span>
+            <div class="color-picker-wrap">
+              <input type="color" [ngModel]="toHex(el.listMarkerColor || '#7c5af5')"
+                (ngModelChange)="update({listMarkerColor: $event})" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 8px;">
+            <label>Item Spacing</label>
+            <input type="number" [ngModel]="el.itemSpacing || 8"
+              (ngModelChange)="update({itemSpacing: +$event})" min="0" max="20" />
+          </div>
+        </div>
+
+        <!-- Columns Element Properties -->
+        <div class="panel-section" *ngIf="el.type === 'columns'">
+          <div class="section-title">Columns</div>
+          <div class="form-group">
+            <label>Column Gap</label>
+            <input type="number" [ngModel]="el.columnGap || 20"
+              (ngModelChange)="update({columnGap: +$event})" min="0" max="50" />
+          </div>
+        </div>
+
+        <!-- SVG Element Properties -->
+        <div class="panel-section" *ngIf="el.type === 'svg'">
+          <div class="section-title">SVG Source</div>
+          <div class="form-group full">
+            <textarea
+              [ngModel]="el.content"
+              (ngModelChange)="update({content: $event})"
+              rows="5"
+              placeholder="<svg>...</svg>"></textarea>
+          </div>
         </div>
 
         <!-- Delete -->
@@ -456,6 +762,50 @@ import { EditorElement, ElementStyle, FONT_FAMILIES } from '../../models/editor.
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
     }
+
+    .page-settings-section {
+      width: 100%;
+      padding: 0 16px;
+    }
+
+    .page-settings-section .form-group {
+      margin-bottom: 8px;
+    }
+
+    .page-settings-section .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .page-settings-section .prop-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .page-settings-section .color-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .page-settings-section .color-label {
+      font-size: 11px;
+      color: var(--text-3);
+      min-width: 36px;
+    }
+
+    .page-settings-section .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .page-settings-section .toggle-row span {
+      font-size: 12px;
+      color: var(--text-2);
+    }
   `]
 })
 export class PropertiesPanelComponent implements OnInit, OnDestroy {
@@ -524,4 +874,47 @@ export class PropertiesPanelComponent implements OnInit, OnDestroy {
   round(n: number) { return Math.round(n); }
   pct(n: number) { return Math.round(n * 100); }
   formatVar(v: string) { return '{{' + v + '}}'; }
+
+  updateTableRows(rows: number) {
+    if (!this.el) return;
+    const current = this.el.tableData || { rows: 3, cols: 3, cells: [], colWidths: ['*', '*', '*'], headerRows: 1, alternateRowFill: '#f5f5f5', defaultBorderColor: '#cccccc', defaultFontSize: 10 };
+    const newCells = Array(rows).fill(null).map((_, r) =>
+      Array(current.cols).fill(null).map((__, c) => {
+        if (r < current.cells.length && c < current.cells[r].length) {
+          return current.cells[r][c];
+        }
+        return { text: r === 0 ? `Header ${c + 1}` : `Cell ${r}-${c + 1}`, bold: r === 0, fontSize: r === 0 ? 10 : 9, alignment: 'center' };
+      })
+    );
+    this.update({ tableData: { ...current, rows, cells: newCells } });
+  }
+
+  updateTableCols(cols: number) {
+    if (!this.el) return;
+    const current = this.el.tableData || { rows: 3, cols: 3, cells: [], colWidths: ['*', '*', '*'], headerRows: 1, alternateRowFill: '#f5f5f5', defaultBorderColor: '#cccccc', defaultFontSize: 10 };
+    const newCells = Array(current.rows).fill(null).map((_, r) =>
+      Array(cols).fill(null).map((__, c) => {
+        if (r < current.cells.length && c < current.cells[r].length) {
+          return current.cells[r][c];
+        }
+        return { text: r === 0 ? `Header ${c + 1}` : `Cell ${r}-${c + 1}`, bold: r === 0, fontSize: r === 0 ? 10 : 9, alignment: 'center' };
+      })
+    );
+    const newColWidths = Array(cols).fill('*');
+    this.update({ tableData: { ...current, cols, cells: newCells, colWidths: newColWidths } });
+  }
+
+  updateTableData(updates: any) {
+    if (!this.el) return;
+    const current = this.el.tableData || { rows: 3, cols: 3, cells: [], colWidths: ['*', '*', '*'], headerRows: 1, alternateRowFill: '#f5f5f5', defaultBorderColor: '#cccccc', defaultFontSize: 10 };
+    this.update({ tableData: { ...current, ...updates } });
+  }
+
+  get pageSettings(): any {
+    return this.editorService.page;
+  }
+
+  updatePage(updates: any) {
+    this.editorService.updatePage(updates);
+  }
 }

@@ -89,6 +89,25 @@ export class PdfService {
           if (el.style.backgroundColor && el.style.backgroundColor !== 'transparent') {
             node.background = el.style.backgroundColor;
           }
+          // Text enhancements
+          if (el.style.underline || el.style.strike) {
+            const decorations: string[] = [];
+            if (el.style.underline) decorations.push('underline');
+            if (el.style.strike) decorations.push('lineThrough');
+            node.decoration = decorations;
+          }
+          if (el.style.decorationStyle && el.style.decorationStyle !== 'none') {
+            node.decorationStyle = el.style.decorationStyle;
+          }
+          if (el.style.decorationColor) {
+            node.decorationColor = el.style.decorationColor;
+          }
+          if (el.style.characterSpacing && el.style.characterSpacing > 0) {
+            node.characterSpacing = el.style.characterSpacing;
+          }
+          if (el.style.linkUrl) {
+            node.link = this.resolveVars(el.style.linkUrl, record);
+          }
           content.push(node);
           break;
         }
@@ -149,6 +168,135 @@ export class PdfService {
           }
           break;
         }
+
+        case 'line': {
+          content.push({
+            canvas: [{
+              type: 'line',
+              x1: 0, y1: el.style.lineWidth / 2 || 1,
+              x2: el.width, y2: el.style.lineWidth / 2 || 1,
+              lineWidth: el.style.lineWidth || 1,
+              lineColor: el.style.lineColor || '#000000',
+              lineCap: el.style.lineCapStyle || 'butt',
+              dash: el.style.lineDash > 0 ? { length: el.style.lineDash } : undefined,
+            }],
+            absolutePosition: { x: el.x, y: el.y },
+            width: el.width,
+          });
+          break;
+        }
+
+        case 'ellipse': {
+          const hasBackground = el.style.backgroundColor && el.style.backgroundColor !== 'transparent';
+          const hasBorder = el.style.borderWidth > 0 && el.style.borderColor && el.style.borderColor !== 'transparent';
+          content.push({
+            canvas: [{
+              type: 'ellipse',
+              x: el.width / 2,
+              y: el.height / 2,
+              r1: el.width / 2,
+              r2: el.height / 2,
+              color: hasBackground ? el.style.backgroundColor : undefined,
+              lineWidth: hasBorder ? el.style.borderWidth : 0,
+              lineColor: hasBorder ? el.style.borderColor : undefined,
+            }],
+            absolutePosition: { x: el.x, y: el.y },
+            width: el.width,
+            height: el.height,
+          });
+          break;
+        }
+
+        case 'table': {
+          if (el.tableData) {
+            const tableData = el.tableData;
+            content.push({
+              table: {
+                headerRows: tableData.headerRows || 1,
+                widths: tableData.colWidths || ['*'],
+                body: tableData.cells.map((row: any[], ri: number) =>
+                  row.map((cell: any) => ({
+                    text: this.resolveVars(cell.text, record),
+                    rowSpan: cell.rowSpan,
+                    colSpan: cell.colSpan,
+                    fillColor: cell.fillColor || (ri % 2 === 1 ? tableData.alternateRowFill : undefined),
+                    color: cell.color,
+                    bold: cell.bold,
+                    fontSize: cell.fontSize || tableData.defaultFontSize,
+                    alignment: cell.alignment,
+                    border: cell.border,
+                    borderColor: cell.borderColor,
+                  }))
+                ),
+              },
+              absolutePosition: { x: el.x, y: el.y },
+              width: el.width,
+            });
+          }
+          break;
+        }
+
+        case 'qrcode': {
+          const qrContent = this.resolveVars(el.content, record);
+          content.push({
+            qr: qrContent || 'QR',
+            fit: el.style.qrFit || el.width,
+            foreground: el.style.qrForeground || '#000000',
+            background: el.style.qrBackground || '#ffffff',
+            eccLevel: el.style.qrEcc || 'M',
+            absolutePosition: { x: el.x, y: el.y },
+          });
+          break;
+        }
+
+        case 'list': {
+          const listItems = (el.listItems || []).map((item: any) => this.resolveVars(item.text, record));
+          if (el.listType === 'ol') {
+            content.push({
+              ol: listItems,
+              type: el.listStyle || 'decimal',
+              color: el.listMarkerColor,
+              absolutePosition: { x: el.x, y: el.y },
+              width: el.width,
+            });
+          } else {
+            content.push({
+              ul: listItems,
+              type: el.listStyle || 'disc',
+              color: el.listMarkerColor,
+              absolutePosition: { x: el.x, y: el.y },
+              width: el.width,
+            });
+          }
+          break;
+        }
+
+        case 'columns': {
+          const columns = (el.columnDefs || []).map((col: any) => ({
+            text: this.resolveVars(col.text, record),
+            width: col.width,
+            fontSize: col.fontSize,
+            color: col.color,
+            bold: col.bold,
+            alignment: col.alignment,
+          }));
+          content.push({
+            columns,
+            columnGap: el.columnGap || 20,
+            absolutePosition: { x: el.x, y: el.y },
+          });
+          break;
+        }
+
+        case 'svg': {
+          const svgContent = this.resolveVars(el.content, record);
+          content.push({
+            svg: svgContent,
+            fit: [el.width, el.height],
+            absolutePosition: { x: el.x, y: el.y },
+          });
+          break;
+        }
       }
     }
 
@@ -159,6 +307,9 @@ export class PdfService {
   buildDocDefinition(template: Template, records: DataRecord[]): any {
     const effectiveRecords = records.length > 0 ? records : [{}];
     const content: any[] = [];
+
+    // Get page settings
+    const pageSettings = template.pages ? template.pages[0].settings : template.page;
 
     if (template.pages && template.hasBackPage && template.pages.length >= 2) {
       // Multi-page mode (front/back)
@@ -189,6 +340,11 @@ export class PdfService {
           frontPage.settings.marginBottom
         ],
         content,
+        // Header & Footer
+        header: frontPage.settings.headerText ? this.createHeaderFunction(frontPage.settings, records) : undefined,
+        footer: this.createFooterFunction(frontPage.settings, records),
+        // Watermark
+        watermark: frontPage.settings.watermark ? this.createWatermark(frontPage.settings) : undefined,
       };
     } else {
       // Single-page mode (backward compatibility)
@@ -206,8 +362,54 @@ export class PdfService {
         pageSize: { width, height },
         pageMargins: [marginLeft, marginTop, marginRight, marginBottom],
         content,
+        // Header & Footer
+        header: template.page.headerText ? this.createHeaderFunction(template.page, records) : undefined,
+        footer: this.createFooterFunction(template.page, records),
+        // Watermark
+        watermark: template.page.watermark ? this.createWatermark(template.page) : undefined,
       };
     }
+  }
+
+  private createHeaderFunction(settings: any, records: DataRecord[]): (currentPage: number, pageCount: number) => any {
+    return (currentPage: number, pageCount: number) => ({
+      text: this.resolveVars(settings.headerText, { pageNumber: String(currentPage), totalPages: String(pageCount), ...records[0] }),
+      fontSize: settings.headerFontSize || 12,
+      alignment: settings.headerAlignment || 'center',
+      margin: [settings.marginLeft || 0, settings.headerMarginTop || 10, settings.marginRight || 0, 0],
+    });
+  }
+
+  private createFooterFunction(settings: any, records: DataRecord[]): (currentPage: number, pageCount: number) => any {
+    return (currentPage: number, pageCount: number) => {
+      const footerParts: string[] = [];
+      if (settings.footerText) {
+        footerParts.push(this.resolveVars(settings.footerText, { pageNumber: String(currentPage), totalPages: String(pageCount), ...records[0] }));
+      }
+      if (settings.showPageNumbers) {
+        const pageNumText = (settings.pageNumberFormat || 'Page {{page}} of {{total}}')
+          .replace('{{page}}', String(currentPage))
+          .replace('{{total}}', String(pageCount));
+        footerParts.push(pageNumText);
+      }
+      return {
+        text: footerParts.join(' | '),
+        fontSize: settings.footerFontSize || 12,
+        alignment: settings.footerAlignment || 'center',
+        margin: [settings.marginLeft || 0, 0, settings.marginRight || 0, settings.footerMarginBottom || 10],
+      };
+    };
+  }
+
+  private createWatermark(settings: any): any {
+    return {
+      text: settings.watermark,
+      color: settings.watermarkColor || '#cccccc',
+      opacity: settings.watermarkOpacity || 0.3,
+      bold: settings.watermarkBold || false,
+      angle: settings.watermarkAngle || 45,
+      fontSize: settings.watermarkFontSize || 80,
+    };
   }
 
   // ─── Generate PDF ─────────────────────────────────────────────────────────
