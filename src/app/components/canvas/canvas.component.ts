@@ -73,18 +73,19 @@ type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
             [style.cursor]="activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : (el.locked ? 'not-allowed' : 'move')">
 
             <!-- TEXT -->
-            <div *ngIf="el.type === 'text'"
-                 class="el-text"
-                 [style.fontSize.px]="el.style.fontSize"
-                 [style.fontWeight]="el.style.bold ? 700 : 400"
-                 [style.fontStyle]="el.style.italic ? 'italic' : 'normal'"
-                 [style.textAlign]="el.style.alignment"
-                 [style.color]="el.style.color"
-                 [style.lineHeight]="el.style.lineHeight"
-                 [style.backgroundColor]="el.style.backgroundColor"
-                 [style.fontFamily]="getFontFamily(el.style.fontFamily)">
-              {{ resolvePreview(el.content) }}
-            </div>
+             <div *ngIf="el.type === 'text'"
+                  class="el-text"
+                  [style.fontSize.px]="el.style.fontSize"
+                  [style.fontWeight]="el.style.bold ? 700 : 400"
+                  [style.fontStyle]="el.style.italic ? 'italic' : 'normal'"
+                  [style.textAlign]="el.style.alignment"
+                  [style.color]="el.style.color"
+                  [style.lineHeight]="el.style.lineHeight"
+                  [style.backgroundColor]="el.style.backgroundColor"
+                  [style.fontFamily]="getFontFamily(el.style.fontFamily)"
+                  style="padding: 0; margin: 0; white-space: pre; line-height: 1.2;">
+               {{ resolvePreview(el.content) }}
+             </div>
 
             <!-- IMAGE -->
             <div *ngIf="el.type === 'image'" class="el-image-wrap">
@@ -962,6 +963,23 @@ export class CanvasComponent implements OnInit, OnDestroy {
 
   onDrop(e: DragEvent) {
     e.preventDefault();
+
+    // Check if it's an element being dragged from palette (data transfer has element type)
+    const elementType = e.dataTransfer?.getData('text/plain');
+    if (elementType && ['text', 'image', 'rectangle', 'roundrect', 'line', 'ellipse', 'table', 'qrcode', 'list', 'columns', 'svg'].includes(elementType)) {
+      // Calculate correct drop position on page, accounting for scale and pan
+      const pageRect = this.pageElRef?.nativeElement.getBoundingClientRect();
+      if (pageRect) {
+        const dropX = (e.clientX - pageRect.left) / this.scale;
+        const dropY = (e.clientY - pageRect.top) / this.scale;
+
+        // Add element at correct position
+        this.editorService.addElementAt(elementType as any, Math.max(0, dropX), Math.max(0, dropY));
+      }
+      return;
+    }
+
+    // Handle background image file drop
     const file = e.dataTransfer?.files[0];
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();

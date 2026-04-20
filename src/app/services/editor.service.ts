@@ -86,13 +86,17 @@ export class EditorService {
 
   // ─── Element Operations ────────────────────────────────────────────────────
   addElement(type: ElementType): EditorElement {
+    return this.addElementAt(type, this.page.width / 2, this.page.height / 2);
+  }
+
+  addElementAt(type: ElementType, x: number, y: number): EditorElement {
     this.snapshot();
     const id = `el_${++elementCounter}_${Date.now()}`;
     const baseStyle: ElementStyle = { ...DEFAULT_STYLE };
 
     let el: EditorElement;
-    const cx = this.page.width / 2;
-    const cy = this.page.height / 2;
+    const cx = x;
+    const cy = y;
 
     switch (type) {
       case 'text':

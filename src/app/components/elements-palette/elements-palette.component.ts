@@ -115,50 +115,50 @@ import { ReversePipe } from '../../pipes/reverse.pipe';
       <div class="panel-section">
         <div class="section-title">Add Elements</div>
         <div class="element-types">
-          <button class="el-type-btn" (click)="addElement('text')">
-            <span class="el-icon">T</span>
-            <span>Text</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('image')">
-            <span class="el-icon">🖼</span>
-            <span>Image</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('rectangle')">
-            <span class="el-icon">▭</span>
-            <span>Rectangle</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('roundrect')">
-            <span class="el-icon">⧫</span>
-            <span>Round</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('line')">
-            <span class="el-icon">─</span>
-            <span>Line</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('ellipse')">
-            <span class="el-icon">◯</span>
-            <span>Ellipse</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('table')">
-            <span class="el-icon">▦</span>
-            <span>Table</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('qrcode')">
-            <span class="el-icon">▣</span>
-            <span>QR Code</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('list')">
-            <span class="el-icon">☰</span>
-            <span>List</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('columns')">
-            <span class="el-icon">≡</span>
-            <span>Columns</span>
-          </button>
-          <button class="el-type-btn" (click)="addElement('svg')">
-            <span class="el-icon">◇</span>
-            <span>SVG</span>
-          </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'text')" (click)="addElement('text')">
+             <span class="el-icon">T</span>
+             <span>Text</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'image')" (click)="addElement('image')">
+             <span class="el-icon">🖼</span>
+             <span>Image</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'rectangle')" (click)="addElement('rectangle')">
+             <span class="el-icon">▭</span>
+             <span>Rectangle</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'roundrect')" (click)="addElement('roundrect')">
+             <span class="el-icon">⧫</span>
+             <span>Round</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'line')" (click)="addElement('line')">
+             <span class="el-icon">─</span>
+             <span>Line</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'ellipse')" (click)="addElement('ellipse')">
+             <span class="el-icon">◯</span>
+             <span>Ellipse</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'table')" (click)="addElement('table')">
+             <span class="el-icon">▦</span>
+             <span>Table</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'qrcode')" (click)="addElement('qrcode')">
+             <span class="el-icon">▣</span>
+             <span>QR Code</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'list')" (click)="addElement('list')">
+             <span class="el-icon">☰</span>
+             <span>List</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'columns')" (click)="addElement('columns')">
+             <span class="el-icon">≡</span>
+             <span>Columns</span>
+           </button>
+           <button class="el-type-btn" draggable="true" (dragstart)="onElementDragStart($event, 'svg')" (click)="addElement('svg')">
+             <span class="el-icon">◇</span>
+             <span>SVG</span>
+           </button>
         </div>
       </div>
 
@@ -944,5 +944,10 @@ export class ElementsPaletteComponent implements OnInit, OnDestroy {
 
   toggleBackPage(enabled: boolean) {
     this.editorService.toggleBackPage(enabled);
+  }
+
+  onElementDragStart(e: DragEvent, type: string) {
+    e.dataTransfer?.setData('text/plain', type);
+    e.dataTransfer!.effectAllowed = 'move';
   }
 }
